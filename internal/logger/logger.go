@@ -1,4 +1,4 @@
-og ㅍㅜ시 ㅇㅇ까 푸시시package logger
+package logger
 
 import (
 	"fmt"
