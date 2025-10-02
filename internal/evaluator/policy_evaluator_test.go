@@ -11,7 +11,7 @@ import (
 )
 
 func TestPolicyEvaluator_Evaluate(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("valid policy evaluation", func(t *testing.T) {
 		workload := &types.Workload{
@@ -165,7 +165,7 @@ func TestPolicyEvaluator_Evaluate(t *testing.T) {
 }
 
 func TestPolicyEvaluator_EvaluateSingle(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("evaluate single policy", func(t *testing.T) {
 		workload := &types.Workload{
@@ -217,7 +217,7 @@ func TestPolicyEvaluator_EvaluateSingle(t *testing.T) {
 }
 
 func TestPolicyEvaluator_GetApplicablePolicies(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("get applicable policies", func(t *testing.T) {
 		workload := &types.Workload{
@@ -318,7 +318,7 @@ func TestPolicyEvaluator_GetApplicablePolicies(t *testing.T) {
 }
 
 func TestPolicyEvaluator_ValidatePolicy(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("valid policy", func(t *testing.T) {
 		policy := &types.Policy{
@@ -368,7 +368,7 @@ func TestPolicyEvaluator_ValidatePolicy(t *testing.T) {
 }
 
 func TestPolicyEvaluator_Health(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	health, err := evaluator.Health(context.Background())
 	require.NoError(t, err)
@@ -376,7 +376,7 @@ func TestPolicyEvaluator_Health(t *testing.T) {
 }
 
 func TestPolicyEvaluator_isPolicyApplicable(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("policy applicable by namespace", func(t *testing.T) {
 		workload := &types.Workload{
@@ -539,7 +539,7 @@ func TestPolicyEvaluator_isPolicyApplicable(t *testing.T) {
 }
 
 func TestPolicyEvaluator_calculateCostScore(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("calculate cost score", func(t *testing.T) {
 		workload := &types.Workload{
@@ -569,7 +569,7 @@ func TestPolicyEvaluator_calculateCostScore(t *testing.T) {
 }
 
 func TestPolicyEvaluator_calculatePriorityScore(t *testing.T) {
-	evaluator := NewPolicyEvaluator(nil, nil)
+	evaluator := NewPolicyEvaluator(nil, nil, nil)
 
 	t.Run("calculate priority score", func(t *testing.T) {
 		workload := &types.Workload{

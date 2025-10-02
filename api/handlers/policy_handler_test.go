@@ -40,14 +40,24 @@ func (m *MockStorageManager) Evaluation() storage.EvaluationStore {
 	return args.Get(0).(storage.EvaluationStore)
 }
 
-func (m *MockStorageManager) Health(ctx context.Context) (map[string]interface{}, error) {
+func (m *MockStorageManager) Health(ctx context.Context) error {
 	args := m.Called(ctx)
-	return args.Get(0).(map[string]interface{}), args.Error(1)
+	return args.Error(0)
 }
 
 func (m *MockStorageManager) GetMetrics(ctx context.Context) (map[string]interface{}, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockStorageManager) BeginTransaction(ctx context.Context) (storage.Transaction, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(storage.Transaction), args.Error(1)
+}
+
+func (m *MockStorageManager) Close() error {
+	args := m.Called()
+	return args.Error(0)
 }
 
 // MockPolicyStore is a mock implementation of storage.PolicyStore

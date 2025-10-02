@@ -73,7 +73,7 @@ func main() {
 	logger.Info("Evaluation engine initialized")
 
 	// Initialize automation engine
-	automationEngine := automation.NewAutomationEngine(storageManager, logger)
+	automationEngine := automation.NewAutomationEngine(storageManager, nil, nil, nil, logger)
 	if err := automationEngine.Initialize(context.Background()); err != nil {
 		logger.Fatal("Failed to initialize automation engine", "error", err)
 	}

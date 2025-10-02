@@ -55,7 +55,7 @@ func SetupTestServer(t *testing.T) *TestServer {
 	evaluationEngine := evaluator.NewEvaluationEngine(storageManager, testLogger)
 
 	// Initialize automation engine
-	automationEngine := automation.NewAutomationEngine(storageManager, testLogger)
+	automationEngine := automation.NewAutomationEngine(storageManager, nil, nil, nil, testLogger)
 	err = automationEngine.Initialize(context.Background())
 	require.NoError(t, err)
 

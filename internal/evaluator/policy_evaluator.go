@@ -12,9 +12,10 @@ import (
 
 // policyEvaluator implements PolicyEvaluator interface
 type policyEvaluator struct {
-	storage    storage.StorageManager
-	ruleEngine RuleEngine
-	logger     *types.Logger
+	storage         storage.StorageManager
+	ruleEngine      RuleEngine
+	logger          *types.Logger
+	evaluationCount int64
 }
 
 // NewPolicyEvaluator creates a new policy evaluator
@@ -29,6 +30,7 @@ func NewPolicyEvaluator(storage storage.StorageManager, ruleEngine RuleEngine, l
 // Evaluate evaluates a workload against applicable policies
 func (e *policyEvaluator) Evaluate(ctx context.Context, workload *types.Workload, policies []types.Policy) ([]*types.EvaluationResult, error) {
 	startTime := time.Now()
+	e.evaluationCount++
 
 	e.logger.WithWorkload(workload.ID, string(workload.Type)).Info("starting policy evaluation")
 
