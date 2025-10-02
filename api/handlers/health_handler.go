@@ -38,36 +38,42 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	details := make(map[string]interface{})
 
 	// Check storage health
-	if storageHealth, err := h.storage.Health(c.Request.Context()); err != nil {
+	if err := h.storage.Health(c.Request.Context()); err != nil {
 		status = "unhealthy"
 		details["storage"] = map[string]interface{}{
 			"status": "unhealthy",
 			"error":  err.Error(),
 		}
 	} else {
-		details["storage"] = storageHealth
+		details["storage"] = map[string]interface{}{
+			"status": "healthy",
+		}
 	}
 
 	// Check evaluator health
-	if evaluatorHealth, err := h.evaluator.Health(c.Request.Context()); err != nil {
+	if err := h.evaluator.Health(c.Request.Context()); err != nil {
 		status = "unhealthy"
 		details["evaluator"] = map[string]interface{}{
 			"status": "unhealthy",
 			"error":  err.Error(),
 		}
 	} else {
-		details["evaluator"] = evaluatorHealth
+		details["evaluator"] = map[string]interface{}{
+			"status": "healthy",
+		}
 	}
 
 	// Check automation health
-	if automationHealth, err := h.automation.Health(c.Request.Context()); err != nil {
+	if err := h.automation.Health(c.Request.Context()); err != nil {
 		status = "unhealthy"
 		details["automation"] = map[string]interface{}{
 			"status": "unhealthy",
 			"error":  err.Error(),
 		}
 	} else {
-		details["automation"] = automationHealth
+		details["automation"] = map[string]interface{}{
+			"status": "healthy",
+		}
 	}
 
 	// Determine HTTP status code
@@ -97,7 +103,7 @@ func (h *HealthHandler) Readiness(c *gin.Context) {
 	details := make(map[string]interface{})
 
 	// Check storage readiness
-	if storageHealth, err := h.storage.Health(c.Request.Context()); err != nil {
+	if err := h.storage.Health(c.Request.Context()); err != nil {
 		ready = false
 		details["storage"] = map[string]interface{}{
 			"ready": false,
@@ -106,12 +112,11 @@ func (h *HealthHandler) Readiness(c *gin.Context) {
 	} else {
 		details["storage"] = map[string]interface{}{
 			"ready": true,
-			"info":  storageHealth,
 		}
 	}
 
 	// Check evaluator readiness
-	if evaluatorHealth, err := h.evaluator.Health(c.Request.Context()); err != nil {
+	if err := h.evaluator.Health(c.Request.Context()); err != nil {
 		ready = false
 		details["evaluator"] = map[string]interface{}{
 			"ready": false,
@@ -120,12 +125,11 @@ func (h *HealthHandler) Readiness(c *gin.Context) {
 	} else {
 		details["evaluator"] = map[string]interface{}{
 			"ready": true,
-			"info":  evaluatorHealth,
 		}
 	}
 
 	// Check automation readiness
-	if automationHealth, err := h.automation.Health(c.Request.Context()); err != nil {
+	if err := h.automation.Health(c.Request.Context()); err != nil {
 		ready = false
 		details["automation"] = map[string]interface{}{
 			"ready": false,
@@ -134,7 +138,6 @@ func (h *HealthHandler) Readiness(c *gin.Context) {
 	} else {
 		details["automation"] = map[string]interface{}{
 			"ready": true,
-			"info":  automationHealth,
 		}
 	}
 
@@ -178,33 +181,39 @@ func (h *HealthHandler) SystemStatus(c *gin.Context) {
 	status := make(map[string]interface{})
 
 	// Storage status
-	if storageHealth, err := h.storage.Health(c.Request.Context()); err != nil {
+	if err := h.storage.Health(c.Request.Context()); err != nil {
 		status["storage"] = map[string]interface{}{
 			"status": "error",
 			"error":  err.Error(),
 		}
 	} else {
-		status["storage"] = storageHealth
+		status["storage"] = map[string]interface{}{
+			"status": "healthy",
+		}
 	}
 
 	// Evaluator status
-	if evaluatorHealth, err := h.evaluator.Health(c.Request.Context()); err != nil {
+	if err := h.evaluator.Health(c.Request.Context()); err != nil {
 		status["evaluator"] = map[string]interface{}{
 			"status": "error",
 			"error":  err.Error(),
 		}
 	} else {
-		status["evaluator"] = evaluatorHealth
+		status["evaluator"] = map[string]interface{}{
+			"status": "healthy",
+		}
 	}
 
 	// Automation status
-	if automationHealth, err := h.automation.Health(c.Request.Context()); err != nil {
+	if err := h.automation.Health(c.Request.Context()); err != nil {
 		status["automation"] = map[string]interface{}{
 			"status": "error",
 			"error":  err.Error(),
 		}
 	} else {
-		status["automation"] = automationHealth
+		status["automation"] = map[string]interface{}{
+			"status": "healthy",
+		}
 	}
 
 	// System info
@@ -278,14 +287,14 @@ func (h *HealthHandler) Info(c *gin.Context) {
 	startTime := time.Now()
 
 	info := map[string]interface{}{
-		"service":        "policy-engine",
-		"version":        "1.0.0",
-		"description":    "Kubernetes Policy Engine for Cost Optimization",
-		"build_time":     "2024-01-01T00:00:00Z",
-		"git_commit":     "unknown",
-		"git_branch":     "main",
-		"go_version":     "1.21.0",
-		"architecture":   "linux/amd64",
+		"service":      "policy-engine",
+		"version":      "1.0.0",
+		"description":  "Kubernetes Policy Engine for Cost Optimization",
+		"build_time":   "2024-01-01T00:00:00Z",
+		"git_commit":   "unknown",
+		"git_branch":   "main",
+		"go_version":   "1.21.0",
+		"architecture": "linux/amd64",
 		"capabilities": []string{
 			"policy-evaluation",
 			"policy-enforcement",
@@ -294,14 +303,14 @@ func (h *HealthHandler) Info(c *gin.Context) {
 			"workload-priority",
 		},
 		"endpoints": map[string]string{
-			"health":     "/health",
-			"readiness":  "/ready",
-			"liveness":   "/live",
-			"status":     "/status",
-			"metrics":    "/metrics",
-			"info":       "/info",
-			"policies":   "/api/v1/policies",
-			"workloads":  "/api/v1/workloads",
+			"health":      "/health",
+			"readiness":   "/ready",
+			"liveness":    "/live",
+			"status":      "/status",
+			"metrics":     "/metrics",
+			"info":        "/info",
+			"policies":    "/api/v1/policies",
+			"workloads":   "/api/v1/workloads",
 			"evaluations": "/api/v1/evaluations",
 			"automation":  "/api/v1/automation",
 		},

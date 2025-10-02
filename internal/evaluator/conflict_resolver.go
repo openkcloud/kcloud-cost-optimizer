@@ -167,8 +167,8 @@ func (cr *conflictResolver) detectContradictoryRecommendations(results []*types.
 		policyRecommendations[result.PolicyName] = make(map[string][]*types.Recommendation)
 
 		for _, rec := range result.Recommendations {
-			recommendationsByType[rec.Type] = append(recommendationsByType[rec.Type], rec)
-			policyRecommendations[result.PolicyName][rec.Type] = append(policyRecommendations[result.PolicyName][rec.Type], rec)
+			recommendationsByType[rec.Type] = append(recommendationsByType[rec.Type], &rec)
+			policyRecommendations[result.PolicyName][rec.Type] = append(policyRecommendations[result.PolicyName][rec.Type], &rec)
 		}
 	}
 
@@ -225,8 +225,8 @@ func (cr *conflictResolver) detectConflictingConstraints(results []*types.Evalua
 		policyConstraints[result.PolicyName] = make(map[string][]*types.Constraint)
 
 		for _, constraint := range result.Constraints {
-			constraintsByType[constraint.Type] = append(constraintsByType[constraint.Type], constraint)
-			policyConstraints[result.PolicyName][constraint.Type] = append(policyConstraints[result.PolicyName][constraint.Type], constraint)
+			constraintsByType[constraint.Type] = append(constraintsByType[constraint.Type], &constraint)
+			policyConstraints[result.PolicyName][constraint.Type] = append(policyConstraints[result.PolicyName][constraint.Type], &constraint)
 		}
 	}
 
@@ -283,8 +283,8 @@ func (cr *conflictResolver) detectConflictingViolations(results []*types.Evaluat
 		policyViolations[result.PolicyName] = make(map[string][]*types.Violation)
 
 		for _, violation := range result.Violations {
-			violationTypes[violation.Type] = append(violationTypes[violation.Type], violation)
-			policyViolations[result.PolicyName][violation.Type] = append(policyViolations[result.PolicyName][violation.Type], violation)
+			violationTypes[violation.Type] = append(violationTypes[violation.Type], &violation)
+			policyViolations[result.PolicyName][violation.Type] = append(policyViolations[result.PolicyName][violation.Type], &violation)
 		}
 	}
 

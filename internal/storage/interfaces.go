@@ -2,9 +2,20 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/kcloud-opt/policy/internal/types"
+)
+
+// Storage-related errors
+var (
+	ErrStorageConnection    = errors.New("storage connection error")
+	ErrStorageOperation     = errors.New("storage operation error")
+	ErrStorageNotFound      = errors.New("resource not found")
+	ErrStorageAlreadyExists = errors.New("resource already exists")
+	ErrStorageInvalidData   = errors.New("invalid data provided")
+	ErrStorageTimeout       = errors.New("storage operation timeout")
 )
 
 // PolicyStore defines the interface for policy storage operations

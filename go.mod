@@ -4,9 +4,11 @@ go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gin-contrib/cors v1.5.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	go.uber.org/zap v1.26.0
+	go.uber.org/zap/zapcore v1.26.0
 	
 	// Kubernetes
 	k8s.io/api v0.28.3
@@ -29,4 +31,8 @@ require (
 	// YAML/JSON
 	gopkg.in/yaml.v3 v3.0.1
 	github.com/tidwall/gjson v1.17.0
+	github.com/xeipuuv/gojsonschema v1.2.0
+	
+	// Testing
+	github.com/stretchr/testify v1.8.4
 )

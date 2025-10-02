@@ -63,7 +63,7 @@ build: clean ## Build the application binary
 build-cli: clean ## Build the CLI binary
 	@echo "Building CLI binary..."
 	@mkdir -p $(BUILD_DIR)
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli ./cmd/cli/main.go
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli ./cmd/policy-cli/main.go
 	@echo "CLI build completed: $(BUILD_DIR)/policy-cli"
 
 .PHONY: build-all
@@ -72,19 +72,19 @@ build-all: clean ## Build binaries for all platforms
 	@mkdir -p $(BUILD_DIR)
 	@echo "Building for Linux AMD64..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PACKAGE)
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-amd64 ./cmd/cli/main.go
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-amd64 ./cmd/policy-cli/main.go
 	@echo "Building for Linux ARM64..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 $(MAIN_PACKAGE)
-	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-arm64 ./cmd/cli/main.go
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-arm64 ./cmd/policy-cli/main.go
 	@echo "Building for macOS AMD64..."
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PACKAGE)
-	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-amd64 ./cmd/cli/main.go
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-amd64 ./cmd/policy-cli/main.go
 	@echo "Building for macOS ARM64..."
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PACKAGE)
-	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-arm64 ./cmd/cli/main.go
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-arm64 ./cmd/policy-cli/main.go
 	@echo "Building for Windows AMD64..."
 	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PACKAGE)
-	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-windows-amd64.exe ./cmd/cli/main.go
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-windows-amd64.exe ./cmd/policy-cli/main.go
 	@echo "Build completed for all platforms"
 
 .PHONY: install

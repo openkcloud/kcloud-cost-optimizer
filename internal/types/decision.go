@@ -47,6 +47,17 @@ const (
 	DecisionReasonSystemMaintenance       DecisionReason = "system_maintenance"
 )
 
+// EvaluationStatus represents the status of an evaluation
+type EvaluationStatus string
+
+const (
+	EvaluationStatusPending   EvaluationStatus = "pending"
+	EvaluationStatusRunning   EvaluationStatus = "running"
+	EvaluationStatusCompleted EvaluationStatus = "completed"
+	EvaluationStatusFailed    EvaluationStatus = "failed"
+	EvaluationStatusCancelled EvaluationStatus = "cancelled"
+)
+
 // Decision represents a policy decision
 type Decision struct {
 	ID                 string                 `json:"id" yaml:"id"`
@@ -78,15 +89,18 @@ type DecisionMetadata struct {
 	Version     string            `json:"version" yaml:"version"`
 	RequestID   string            `json:"requestId,omitempty" yaml:"requestId,omitempty"`
 	UserID      string            `json:"userId,omitempty" yaml:"userId,omitempty"`
+	Timestamp   time.Time         `json:"timestamp" yaml:"timestamp"`
 	Labels      map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 
 // EvaluationResult represents the result of policy evaluation
 type EvaluationResult struct {
+	ID              string                 `json:"id" yaml:"id"`
 	PolicyID        string                 `json:"policyId" yaml:"policyId"`
 	PolicyName      string                 `json:"policyName" yaml:"policyName"`
 	PolicyType      PolicyType             `json:"policyType" yaml:"policyType"`
+	WorkloadID      string                 `json:"workloadId" yaml:"workloadId"`
 	Applicable      bool                   `json:"applicable" yaml:"applicable"`
 	Score           float64                `json:"score" yaml:"score"`
 	Violations      []Violation            `json:"violations,omitempty" yaml:"violations,omitempty"`
@@ -95,6 +109,20 @@ type EvaluationResult struct {
 	Metrics         map[string]interface{} `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 	Duration        time.Duration          `json:"duration" yaml:"duration"`
 	Timestamp       time.Time              `json:"timestamp" yaml:"timestamp"`
+}
+
+// Evaluation represents a policy evaluation
+type Evaluation struct {
+	ID           string            `json:"id" yaml:"id"`
+	PolicyID     string            `json:"policyId" yaml:"policyId"`
+	WorkloadID   string            `json:"workloadId" yaml:"workloadId"`
+	Status       EvaluationStatus  `json:"status" yaml:"status"`
+	Result       *EvaluationResult `json:"result,omitempty" yaml:"result,omitempty"`
+	StartTime    time.Time         `json:"startTime" yaml:"startTime"`
+	EndTime      *time.Time        `json:"endTime,omitempty" yaml:"endTime,omitempty"`
+	Duration     time.Duration     `json:"duration,omitempty" yaml:"duration,omitempty"`
+	ErrorMessage string            `json:"errorMessage,omitempty" yaml:"errorMessage,omitempty"`
+	Metadata     map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 // Violation represents a policy violation

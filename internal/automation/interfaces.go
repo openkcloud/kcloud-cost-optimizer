@@ -2,6 +2,7 @@ package automation
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -36,6 +37,7 @@ type AutomationEngine interface {
 type AutomationRule struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
 	Description string                 `json:"description,omitempty"`
 	Enabled     bool                   `json:"enabled"`
 	Priority    int                    `json:"priority"`
@@ -46,6 +48,23 @@ type AutomationRule struct {
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	CreatedAt   time.Time              `json:"createdAt"`
 	UpdatedAt   time.Time              `json:"updatedAt"`
+}
+
+// Validate validates the automation rule
+func (r *AutomationRule) Validate() error {
+	if r.ID == "" {
+		return fmt.Errorf("rule ID is required")
+	}
+	if r.Name == "" {
+		return fmt.Errorf("rule name is required")
+	}
+	if len(r.Conditions) == 0 {
+		return fmt.Errorf("at least one condition is required")
+	}
+	if len(r.Actions) == 0 {
+		return fmt.Errorf("at least one action is required")
+	}
+	return nil
 }
 
 // Condition represents a condition for automation

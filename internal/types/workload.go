@@ -11,6 +11,7 @@ import (
 type WorkloadType string
 
 const (
+	WorkloadTypeDeployment WorkloadType = "deployment"
 	WorkloadTypeMLTraining WorkloadType = "ml_training"
 	WorkloadTypeInference  WorkloadType = "inference"
 	WorkloadTypeBatch      WorkloadType = "batch"

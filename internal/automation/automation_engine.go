@@ -49,6 +49,118 @@ func NewAutomationEngine(
 	}
 }
 
+// CreateRule creates a new automation rule
+func (ae *automationEngine) CreateRule(ctx context.Context, rule *AutomationRule) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	if err := rule.Validate(); err != nil {
+		return fmt.Errorf("invalid rule: %w", err)
+	}
+
+	ae.rules[rule.ID] = rule
+	ae.ruleStatuses[rule.ID] = &RuleStatus{
+		RuleID:      rule.ID,
+		Status:      "registered",
+		LastChecked: time.Now(),
+		CreatedAt:   time.Now(),
+	}
+
+	return nil
+}
+
+// UpdateRule updates an existing automation rule
+func (ae *automationEngine) UpdateRule(ctx context.Context, rule *AutomationRule) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	if err := rule.Validate(); err != nil {
+		return fmt.Errorf("invalid rule: %w", err)
+	}
+
+	if _, exists := ae.rules[rule.ID]; !exists {
+		return fmt.Errorf("rule not found: %s", rule.ID)
+	}
+
+	ae.rules[rule.ID] = rule
+	ae.ruleStatuses[rule.ID].LastUpdated = time.Now()
+
+	return nil
+}
+
+// DeleteRule deletes an automation rule
+func (ae *automationEngine) DeleteRule(ctx context.Context, ruleID string) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	if _, exists := ae.rules[ruleID]; !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	delete(ae.rules, ruleID)
+	delete(ae.ruleStatuses, ruleID)
+
+	return nil
+}
+
+// GetRule gets an automation rule by ID
+func (ae *automationEngine) GetRule(ctx context.Context, ruleID string) (*AutomationRule, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return nil, fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	return rule, nil
+}
+
+// ListRules lists all automation rules
+func (ae *automationEngine) ListRules(ctx context.Context) ([]*AutomationRule, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	rules := make([]*AutomationRule, 0, len(ae.rules))
+	for _, rule := range ae.rules {
+		rules = append(rules, rule)
+	}
+
+	return rules, nil
+}
+
+// EnableRule enables an automation rule
+func (ae *automationEngine) EnableRule(ctx context.Context, ruleID string) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	rule.Enabled = true
+	ae.ruleStatuses[ruleID].LastUpdated = time.Now()
+
+	return nil
+}
+
+// DisableRule disables an automation rule
+func (ae *automationEngine) DisableRule(ctx context.Context, ruleID string) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	rule.Enabled = false
+	ae.ruleStatuses[ruleID].LastUpdated = time.Now()
+
+	return nil
+}
+
 // Start starts the automation engine
 func (ae *automationEngine) Start(ctx context.Context) error {
 	ae.mu.Lock()
