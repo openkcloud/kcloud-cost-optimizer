@@ -75,12 +75,31 @@ type PolicyMetadata struct {
 
 // PolicySpec represents the specification of a policy
 type PolicySpec struct {
+	Type        PolicyType             `json:"type" yaml:"type"`
 	Description string                 `json:"description" yaml:"description"`
+	Objectives  []Objective            `json:"objectives,omitempty" yaml:"objectives,omitempty"`
+	Target      PolicyTarget           `json:"target,omitempty" yaml:"target,omitempty"`
 	Rules       []Rule                 `json:"rules" yaml:"rules"`
 	Targets     []Target               `json:"targets,omitempty" yaml:"targets,omitempty"`
 	Conditions  []Condition            `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	Actions     []Action               `json:"actions,omitempty" yaml:"actions,omitempty"`
 	Parameters  map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+
+// Objective represents a policy objective
+type Objective struct {
+	Name       string                 `json:"name" yaml:"name"`
+	Type       string                 `json:"type" yaml:"type"`
+	Target     *string                `json:"target,omitempty" yaml:"target,omitempty"`
+	Priority   int                    `json:"priority" yaml:"priority"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+
+// PolicyTarget represents the target of a policy
+type PolicyTarget struct {
+	Type      string            `json:"type" yaml:"type"`
+	Selector  map[string]string `json:"selector" yaml:"selector"`
+	Namespace string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 }
 
 // Rule represents a policy rule

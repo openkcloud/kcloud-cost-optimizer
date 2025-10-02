@@ -50,6 +50,15 @@ type Workload struct {
 	UpdatedAt    time.Time            `json:"updatedAt" yaml:"updatedAt"`
 }
 
+// Requirements represents resource requirements
+type Requirements struct {
+	CPU     string `json:"cpu" yaml:"cpu"`
+	Memory  string `json:"memory" yaml:"memory"`
+	Storage string `json:"storage,omitempty" yaml:"storage,omitempty"`
+	GPU     string `json:"gpu,omitempty" yaml:"gpu,omitempty"`
+	NPU     string `json:"npu,omitempty" yaml:"npu,omitempty"`
+}
+
 // Resources represents workload resource requirements
 type Resources struct {
 	CPU     int                  `json:"cpu" yaml:"cpu"`

@@ -142,6 +142,9 @@ type RuleStatus struct {
 	RuleID         string                 `json:"ruleId"`
 	Name           string                 `json:"name"`
 	Status         RuleExecutionStatus    `json:"status"`
+	LastChecked    time.Time              `json:"lastChecked"`
+	CreatedAt      time.Time              `json:"createdAt"`
+	LastUpdated    time.Time              `json:"lastUpdated"`
 	LastExecuted   *time.Time             `json:"lastExecuted,omitempty"`
 	NextExecution  *time.Time             `json:"nextExecution,omitempty"`
 	ExecutionCount int64                  `json:"executionCount"`
@@ -311,3 +314,12 @@ const (
 	OperatorIn                 = "in"
 	OperatorNotIn              = "not_in"
 )
+
+// Trigger represents a trigger for automation
+type Trigger struct {
+	Type       string                 `json:"type"`
+	Name       string                 `json:"name"`
+	Condition  string                 `json:"condition"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
+	Enabled    bool                   `json:"enabled"`
+}

@@ -29,8 +29,8 @@ type PolicyValidator interface {
 	ValidatePercentage(value string) error
 }
 
-// SchemaValidator defines the interface for schema validation
-type SchemaValidator interface {
+// SchemaValidatorInterface defines the interface for schema validation
+type SchemaValidatorInterface interface {
 	// LoadSchemas loads JSON schemas for validation
 	LoadSchemas() error
 
@@ -53,8 +53,8 @@ type SchemaValidator interface {
 	ListSchemas() []string
 }
 
-// ExpressionValidator defines the interface for expression validation
-type ExpressionValidator interface {
+// ExpressionValidatorInterface defines the interface for expression validation
+type ExpressionValidatorInterface interface {
 	// ValidateExpression validates a policy expression
 	ValidateExpression(expression string) error
 
@@ -72,7 +72,7 @@ type ExpressionValidator interface {
 }
 
 // ValidationEngine provides comprehensive validation functionality
-type ValidationEngine interface {
+type ValidationEngineInterface interface {
 	// Initialize initializes the validation engine
 	Initialize(ctx context.Context) error
 
