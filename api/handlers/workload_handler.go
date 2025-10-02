@@ -233,7 +233,7 @@ func (h *WorkloadHandler) ListWorkloads(c *gin.Context) {
 
 // GetWorkloadMetrics handles GET /workloads/:id/metrics
 func (h *WorkloadHandler) GetWorkloadMetrics(c *gin.Context) {
-	startTime := time.Now()
+	requestStartTime := time.Now()
 	workloadID := c.Param("id")
 
 	// Parse time range
@@ -283,7 +283,7 @@ func (h *WorkloadHandler) GetWorkloadMetrics(c *gin.Context) {
 		return
 	}
 
-	duration := time.Since(startTime)
+	duration := time.Since(requestStartTime)
 	h.logger.WithWorkload(workloadID, "").WithDuration(duration).Info("workload metrics retrieved successfully")
 
 	c.JSON(http.StatusOK, gin.H{

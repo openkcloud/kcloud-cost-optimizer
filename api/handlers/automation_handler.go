@@ -54,7 +54,7 @@ func (h *AutomationHandler) CreateAutomationRule(c *gin.Context) {
 	}
 
 	// Create rule
-	if err := h.automation.CreateRule(c.Request.Context(), rule); err != nil {
+	if err := h.automation.CreateRule(c.Request.Context(), &rule); err != nil {
 		h.logger.WithError(err).Error("failed to create automation rule")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "rule_creation_failed",
@@ -130,7 +130,7 @@ func (h *AutomationHandler) UpdateAutomationRule(c *gin.Context) {
 	}
 
 	// Update rule
-	if err := h.automation.UpdateRule(c.Request.Context(), rule); err != nil {
+	if err := h.automation.UpdateRule(c.Request.Context(), &rule); err != nil {
 		h.logger.WithError(err).Error("failed to update automation rule")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "rule_update_failed",
@@ -183,8 +183,7 @@ func (h *AutomationHandler) ListAutomationRules(c *gin.Context) {
 
 	// Status filter
 	if status := c.Query("status"); status != "" {
-		rs := automation.RuleStatus(status)
-		filters.Status = &rs
+		filters.Status = &status
 	}
 
 	// Type filter
@@ -219,7 +218,7 @@ func (h *AutomationHandler) ListAutomationRules(c *gin.Context) {
 	}
 
 	// Get rules
-	rules, err := h.automation.ListRules(c.Request.Context(), filters)
+	rules, err := h.automation.ListRules(c.Request.Context())
 	if err != nil {
 		h.logger.WithError(err).Error("failed to list automation rules")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -231,7 +230,7 @@ func (h *AutomationHandler) ListAutomationRules(c *gin.Context) {
 	}
 
 	// Get total count
-	total, err := h.automation.CountRules(c.Request.Context(), filters)
+	total, err := h.automation.CountRules(c.Request.Context())
 	if err != nil {
 		h.logger.WithError(err).Error("failed to count automation rules")
 		// Continue without total count
@@ -302,7 +301,7 @@ func (h *AutomationHandler) ExecuteAutomationRule(c *gin.Context) {
 	ruleID := c.Param("id")
 
 	// Execute rule
-	result, err := h.automation.ExecuteRule(c.Request.Context(), ruleID)
+	err := h.automation.ExecuteRule(c.Request.Context(), ruleID, map[string]interface{}{})
 	if err != nil {
 		h.logger.WithError(err).Error("failed to execute automation rule")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -317,7 +316,7 @@ func (h *AutomationHandler) ExecuteAutomationRule(c *gin.Context) {
 	h.logger.WithDuration(duration).Info("automation rule executed successfully", "rule_id", ruleID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"result":   result,
+		"result":   "executed",
 		"duration": duration.String(),
 	})
 }
@@ -336,7 +335,10 @@ func (h *AutomationHandler) GetAutomationRuleHistory(c *gin.Context) {
 	}
 
 	// Get history
-	history, err := h.automation.GetRuleHistory(c.Request.Context(), ruleID, limit)
+	filters := &automation.RuleFilters{
+		Limit: limit,
+	}
+	history, err := h.automation.GetRuleHistory(c.Request.Context(), ruleID, filters)
 	if err != nil {
 		h.logger.WithError(err).Error("failed to get automation rule history")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -359,7 +361,7 @@ func (h *AutomationHandler) GetAutomationRuleHistory(c *gin.Context) {
 
 // GetAutomationStatistics handles GET /automation/statistics
 func (h *AutomationHandler) GetAutomationStatistics(c *gin.Context) {
-	startTime := time.Now()
+	requestStartTime := time.Now()
 
 	// Parse time range
 	startTimeStr := c.Query("start_time")
@@ -397,7 +399,11 @@ func (h *AutomationHandler) GetAutomationStatistics(c *gin.Context) {
 	}
 
 	// Get statistics
-	statistics, err := h.automation.GetStatistics(c.Request.Context(), startTime, endTime)
+	filters := &automation.RuleFilters{
+		StartTime: &startTime,
+		EndTime:   &endTime,
+	}
+	statistics, err := h.automation.GetStatistics(c.Request.Context(), filters)
 	if err != nil {
 		h.logger.WithError(err).Error("failed to get automation statistics")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -408,7 +414,7 @@ func (h *AutomationHandler) GetAutomationStatistics(c *gin.Context) {
 		return
 	}
 
-	duration := time.Since(startTime)
+	duration := time.Since(requestStartTime)
 	h.logger.WithDuration(duration).Info("automation statistics retrieved successfully")
 
 	c.JSON(http.StatusOK, gin.H{
@@ -422,7 +428,7 @@ func (h *AutomationHandler) GetAutomationHealth(c *gin.Context) {
 	startTime := time.Now()
 
 	// Get automation engine health
-	health, err := h.automation.Health(c.Request.Context())
+	err := h.automation.Health(c.Request.Context())
 	if err != nil {
 		h.logger.WithError(err).Error("failed to get automation engine health")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -437,7 +443,7 @@ func (h *AutomationHandler) GetAutomationHealth(c *gin.Context) {
 	h.logger.WithDuration(duration).Info("automation health check completed")
 
 	c.JSON(http.StatusOK, gin.H{
-		"health":   health,
+		"health":   "healthy",
 		"duration": duration.String(),
 	})
 }

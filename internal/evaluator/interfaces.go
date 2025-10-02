@@ -186,6 +186,8 @@ type PerformanceInfo struct {
 
 // EvaluationOptions represents options for evaluation
 type EvaluationOptions struct {
+	PolicyIDs          []string      `json:"policyIds,omitempty"`
+	Force              bool          `json:"force,omitempty"`
 	Timeout            time.Duration `json:"timeout,omitempty"`
 	MaxPolicies        int           `json:"maxPolicies,omitempty"`
 	IncludeInactive    bool          `json:"includeInactive,omitempty"`

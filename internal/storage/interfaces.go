@@ -131,6 +131,9 @@ type EvaluationStore interface {
 	GetByWorkload(ctx context.Context, workloadID string) ([]*types.EvaluationResult, error)
 	GetByPolicy(ctx context.Context, policyID string) ([]*types.EvaluationResult, error)
 	GetLatestByWorkload(ctx context.Context, workloadID string) (*types.EvaluationResult, error)
+	GetWorkloadHistory(ctx context.Context, workloadID string, filters *EvaluationFilters) ([]*types.Evaluation, error)
+	GetPolicyHistory(ctx context.Context, policyID string, filters *EvaluationFilters) ([]*types.Evaluation, error)
+	GetStatistics(ctx context.Context, filters *EvaluationFilters) (map[string]interface{}, error)
 
 	// Bulk operations
 	CreateMany(ctx context.Context, results []*types.EvaluationResult) error
@@ -189,6 +192,8 @@ type EvaluationFilters struct {
 	PolicyID   *string    `json:"policyId,omitempty"`
 	WorkloadID *string    `json:"workloadId,omitempty"`
 	Applicable *bool      `json:"applicable,omitempty"`
+	Status     *string    `json:"status,omitempty"`
+	Result     *string    `json:"result,omitempty"`
 	StartTime  *time.Time `json:"startTime,omitempty"`
 	EndTime    *time.Time `json:"endTime,omitempty"`
 	Limit      int        `json:"limit,omitempty"`

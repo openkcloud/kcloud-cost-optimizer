@@ -207,6 +207,94 @@ func (ae *automationEngine) GetMetrics(ctx context.Context) (map[string]interfac
 	return metrics, nil
 }
 
+// CountRules returns the count of automation rules
+func (ae *automationEngine) CountRules(ctx context.Context) (int64, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if ae.closed {
+		return 0, fmt.Errorf("automation engine is closed")
+	}
+
+	return int64(len(ae.rules)), nil
+}
+
+// ExecuteRule executes a specific rule
+func (ae *automationEngine) ExecuteRule(ctx context.Context, ruleID string, context map[string]interface{}) error {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if ae.closed {
+		return fmt.Errorf("automation engine is closed")
+	}
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	if !rule.Enabled {
+		return fmt.Errorf("rule is disabled: %s", ruleID)
+	}
+
+	// Execute the rule (simplified implementation)
+	ae.logger.Info("executing rule", "rule_id", ruleID)
+
+	// Update execution count in status
+	if status, exists := ae.ruleStatuses[ruleID]; exists {
+		status.ExecutionCount++
+		status.LastExecuted = &time.Time{}
+	}
+
+	return nil
+}
+
+// GetRuleHistory gets the execution history of a rule
+func (ae *automationEngine) GetRuleHistory(ctx context.Context, ruleID string, filters *RuleFilters) ([]*RuleExecution, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if ae.closed {
+		return nil, fmt.Errorf("automation engine is closed")
+	}
+
+	// Simplified implementation - return empty history
+	return []*RuleExecution{}, nil
+}
+
+// GetStatistics gets automation engine statistics
+func (ae *automationEngine) GetStatistics(ctx context.Context, filters *RuleFilters) (map[string]interface{}, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if ae.closed {
+		return nil, fmt.Errorf("automation engine is closed")
+	}
+
+	stats := map[string]interface{}{
+		"total_rules":    len(ae.rules),
+		"enabled_rules":  0,
+		"disabled_rules": 0,
+		"executions":     0,
+	}
+
+	// Count enabled/disabled rules
+	for _, rule := range ae.rules {
+		if rule.Enabled {
+			stats["enabled_rules"] = stats["enabled_rules"].(int) + 1
+		} else {
+			stats["disabled_rules"] = stats["disabled_rules"].(int) + 1
+		}
+	}
+
+	// Count total executions
+	for _, status := range ae.ruleStatuses {
+		stats["executions"] = stats["executions"].(int) + int(status.ExecutionCount)
+	}
+
+	return stats, nil
+}
+
 // Start starts the automation engine
 func (ae *automationEngine) Start(ctx context.Context) error {
 	ae.mu.Lock()

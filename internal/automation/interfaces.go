@@ -56,6 +56,18 @@ type AutomationEngine interface {
 	// Initialize initializes the automation engine
 	Initialize(ctx context.Context) error
 
+	// CountRules returns the count of automation rules
+	CountRules(ctx context.Context) (int64, error)
+
+	// ExecuteRule executes a specific rule
+	ExecuteRule(ctx context.Context, ruleID string, context map[string]interface{}) error
+
+	// GetRuleHistory gets the execution history of a rule
+	GetRuleHistory(ctx context.Context, ruleID string, filters *RuleFilters) ([]*RuleExecution, error)
+
+	// GetStatistics gets automation engine statistics
+	GetStatistics(ctx context.Context, filters *RuleFilters) (map[string]interface{}, error)
+
 	// Health checks the health of the automation engine
 	Health(ctx context.Context) error
 }
@@ -322,4 +334,31 @@ type Trigger struct {
 	Condition  string                 `json:"condition"`
 	Parameters map[string]interface{} `json:"parameters,omitempty"`
 	Enabled    bool                   `json:"enabled"`
+}
+
+// RuleFilters defines filters for rule queries
+type RuleFilters struct {
+	Type      *string                `json:"type,omitempty"`
+	Status    *string                `json:"status,omitempty"`
+	Enabled   *bool                  `json:"enabled,omitempty"`
+	Priority  *int                   `json:"priority,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	StartTime *time.Time             `json:"startTime,omitempty"`
+	EndTime   *time.Time             `json:"endTime,omitempty"`
+	Limit     int                    `json:"limit,omitempty"`
+	Offset    int                    `json:"offset,omitempty"`
+}
+
+// RuleExecution represents the execution of an automation rule
+type RuleExecution struct {
+	ID        string                 `json:"id"`
+	RuleID    string                 `json:"ruleId"`
+	Status    RuleExecutionStatus    `json:"status"`
+	StartTime time.Time              `json:"startTime"`
+	EndTime   *time.Time             `json:"endTime,omitempty"`
+	Duration  time.Duration          `json:"duration,omitempty"`
+	Result    map[string]interface{} `json:"result,omitempty"`
+	Error     string                 `json:"error,omitempty"`
+	Context   map[string]interface{} `json:"context,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
 }

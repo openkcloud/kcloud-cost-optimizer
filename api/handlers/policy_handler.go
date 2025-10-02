@@ -65,8 +65,8 @@ func (h *PolicyHandler) CreatePolicy(c *gin.Context) {
 	h.logger.WithPolicy(policy.GetMetadata().Name, "").WithDuration(duration).Info("policy created successfully")
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Policy created successfully",
-		"policy":  policy,
+		"message":  "Policy created successfully",
+		"policy":   policy,
 		"duration": duration.String(),
 	})
 }

@@ -20,9 +20,27 @@ type MockStorageManager struct {
 	mock.Mock
 }
 
+// Called is a helper method to access mock.Mock.Called
+func (m *MockStorageManager) Called(args ...interface{}) mock.Arguments {
+	return m.Mock.Called(args...)
+}
+
+// On is a helper method to access mock.Mock.On
+func (m *MockStorageManager) On(methodName string, arguments ...interface{}) *mock.Call {
+	return m.Mock.On(methodName, arguments...)
+}
+
+// AssertExpectations is a helper method to access mock.Mock.AssertExpectations
+func (m *MockStorageManager) AssertExpectations(t mock.TestingT) bool {
+	return m.Mock.AssertExpectations(t)
+}
+
 func (m *MockStorageManager) Policy() storage.PolicyStore {
 	args := m.Called()
-	return args.Get(0).(storage.PolicyStore)
+	if len(args) > 0 {
+		return args.Get(0).(storage.PolicyStore)
+	}
+	return nil
 }
 
 func (m *MockStorageManager) Workload() storage.WorkloadStore {
@@ -63,6 +81,21 @@ func (m *MockStorageManager) Close() error {
 // MockPolicyStore is a mock implementation of storage.PolicyStore
 type MockPolicyStore struct {
 	mock.Mock
+}
+
+// Called is a helper method to access mock.Mock.Called
+func (m *MockPolicyStore) Called(args ...interface{}) mock.Arguments {
+	return m.Mock.Called(args...)
+}
+
+// On is a helper method to access mock.Mock.On
+func (m *MockPolicyStore) On(methodName string, arguments ...interface{}) *mock.Call {
+	return m.Mock.On(methodName, arguments...)
+}
+
+// AssertExpectations is a helper method to access mock.Mock.AssertExpectations
+func (m *MockPolicyStore) AssertExpectations(t mock.TestingT) bool {
+	return m.Mock.AssertExpectations(t)
 }
 
 func (m *MockPolicyStore) Create(ctx context.Context, policy types.Policy) error {

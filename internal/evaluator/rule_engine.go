@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/expr-lang/expr"
+	"github.com/antonmedv/expr"
 	"github.com/kcloud-opt/policy/internal/types"
 )
 
