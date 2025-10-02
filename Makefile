@@ -175,19 +175,61 @@ docker-push: docker-build ## Push Docker image to registry
 
 # Kubernetes targets
 .PHONY: k8s-deploy
-k8s-deploy: ## Deploy to Kubernetes
+k8s-deploy: ## Deploy to Kubernetes using deployment script
 	@echo "Deploying to Kubernetes..."
+	@./scripts/deploy-k8s.sh deploy
+
+.PHONY: k8s-deploy-manual
+k8s-deploy-manual: ## Deploy to Kubernetes manually
+	@echo "Deploying to Kubernetes manually..."
 	@kubectl apply -f k8s/
 
+.PHONY: k8s-deploy-kustomize
+k8s-deploy-kustomize: ## Deploy to Kubernetes using Kustomize
+	@echo "Deploying to Kubernetes using Kustomize..."
+	@kustomize build k8s/ | kubectl apply -f -
+
 .PHONY: k8s-delete
-k8s-delete: ## Delete from Kubernetes
+k8s-delete: ## Delete from Kubernetes using deployment script
 	@echo "Deleting from Kubernetes..."
+	@./scripts/deploy-k8s.sh cleanup
+
+.PHONY: k8s-delete-manual
+k8s-delete-manual: ## Delete from Kubernetes manually
+	@echo "Deleting from Kubernetes manually..."
 	@kubectl delete -f k8s/
+
+.PHONY: k8s-status
+k8s-status: ## Show Kubernetes deployment status
+	@echo "Showing Kubernetes deployment status..."
+	@./scripts/deploy-k8s.sh status
 
 .PHONY: k8s-logs
 k8s-logs: ## Show Kubernetes logs
 	@echo "Showing Kubernetes logs..."
-	@kubectl logs -f deployment/$(APP_NAME)
+	@kubectl logs -f deployment/$(APP_NAME) -n policy-engine
+
+.PHONY: k8s-port-forward
+k8s-port-forward: ## Port forward to Policy Engine service
+	@echo "Port forwarding to Policy Engine service..."
+	@kubectl port-forward svc/policy-engine-service 8080:8080 -n policy-engine
+
+.PHONY: k8s-port-forward-metrics
+k8s-port-forward-metrics: ## Port forward to Policy Engine metrics
+	@echo "Port forwarding to Policy Engine metrics..."
+	@kubectl port-forward svc/policy-engine-service 9090:9090 -n policy-engine
+
+.PHONY: k8s-describe
+k8s-describe: ## Describe Kubernetes resources
+	@echo "Describing Kubernetes resources..."
+	@kubectl describe deployment $(APP_NAME) -n policy-engine
+	@kubectl describe svc policy-engine-service -n policy-engine
+	@kubectl describe ingress policy-engine-ingress -n policy-engine
+
+.PHONY: k8s-get-all
+k8s-get-all: ## Get all Kubernetes resources
+	@echo "Getting all Kubernetes resources..."
+	@kubectl get all -n policy-engine
 
 # Utility targets
 .PHONY: clean
