@@ -14,12 +14,12 @@ import (
 type policyEvaluator struct {
 	storage         storage.StorageManager
 	ruleEngine      RuleEngine
-	logger          *types.Logger
+	logger          types.Logger
 	evaluationCount int64
 }
 
 // NewPolicyEvaluator creates a new policy evaluator
-func NewPolicyEvaluator(storage storage.StorageManager, ruleEngine RuleEngine, logger *types.Logger) PolicyEvaluator {
+func NewPolicyEvaluator(storage storage.StorageManager, ruleEngine RuleEngine, logger types.Logger) PolicyEvaluator {
 	return &policyEvaluator{
 		storage:    storage,
 		ruleEngine: ruleEngine,

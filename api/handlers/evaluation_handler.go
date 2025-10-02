@@ -13,13 +13,13 @@ import (
 
 // EvaluationHandler handles evaluation-related HTTP requests
 type EvaluationHandler struct {
-	storage    storage.StorageManager
-	evaluator  evaluator.EvaluationEngine
-	logger     *types.Logger
+	storage   storage.StorageManager
+	evaluator evaluator.EvaluationEngine
+	logger    types.Logger
 }
 
 // NewEvaluationHandler creates a new evaluation handler
-func NewEvaluationHandler(storage storage.StorageManager, evaluator evaluator.EvaluationEngine, logger *types.Logger) *EvaluationHandler {
+func NewEvaluationHandler(storage storage.StorageManager, evaluator evaluator.EvaluationEngine, logger types.Logger) *EvaluationHandler {
 	return &EvaluationHandler{
 		storage:   storage,
 		evaluator: evaluator,

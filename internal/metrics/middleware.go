@@ -11,11 +11,11 @@ import (
 // MetricsMiddleware provides middleware for collecting HTTP metrics
 type MetricsMiddleware struct {
 	metrics *Metrics
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewMetricsMiddleware creates a new metrics middleware
-func NewMetricsMiddleware(metrics *Metrics, logger *types.Logger) *MetricsMiddleware {
+func NewMetricsMiddleware(metrics *Metrics, logger types.Logger) *MetricsMiddleware {
 	return &MetricsMiddleware{
 		metrics: metrics,
 		logger:  logger,

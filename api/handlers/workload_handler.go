@@ -13,11 +13,11 @@ import (
 // WorkloadHandler handles workload-related HTTP requests
 type WorkloadHandler struct {
 	storage storage.StorageManager
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewWorkloadHandler creates a new workload handler
-func NewWorkloadHandler(storage storage.StorageManager, logger *types.Logger) *WorkloadHandler {
+func NewWorkloadHandler(storage storage.StorageManager, logger types.Logger) *WorkloadHandler {
 	return &WorkloadHandler{
 		storage: storage,
 		logger:  logger,

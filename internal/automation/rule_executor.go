@@ -14,11 +14,11 @@ type ruleExecutor struct {
 	conditionEvaluator ConditionEvaluator
 	actionExecutors    map[string]ActionExecutor
 	mu                 sync.RWMutex
-	logger             *types.Logger
+	logger             types.Logger
 }
 
 // NewRuleExecutor creates a new rule executor
-func NewRuleExecutor(conditionEvaluator ConditionEvaluator, logger *types.Logger) RuleExecutor {
+func NewRuleExecutor(conditionEvaluator ConditionEvaluator, logger types.Logger) RuleExecutor {
 	return &ruleExecutor{
 		conditionEvaluator: conditionEvaluator,
 		actionExecutors:    make(map[string]ActionExecutor),

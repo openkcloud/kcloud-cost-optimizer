@@ -11,12 +11,12 @@ import (
 // SystemMetricsCollector collects system-level metrics
 type SystemMetricsCollector struct {
 	metrics   *Metrics
-	logger    *types.Logger
+	logger    types.Logger
 	startTime time.Time
 }
 
 // NewSystemMetricsCollector creates a new system metrics collector
-func NewSystemMetricsCollector(metrics *Metrics, logger *types.Logger) *SystemMetricsCollector {
+func NewSystemMetricsCollector(metrics *Metrics, logger types.Logger) *SystemMetricsCollector {
 	return &SystemMetricsCollector{
 		metrics:   metrics,
 		logger:    logger,
@@ -83,11 +83,11 @@ func (smc *SystemMetricsCollector) getCPUUsage() float64 {
 // PolicyMetricsCollector collects policy-specific metrics
 type PolicyMetricsCollector struct {
 	metrics *Metrics
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewPolicyMetricsCollector creates a new policy metrics collector
-func NewPolicyMetricsCollector(metrics *Metrics, logger *types.Logger) *PolicyMetricsCollector {
+func NewPolicyMetricsCollector(metrics *Metrics, logger types.Logger) *PolicyMetricsCollector {
 	return &PolicyMetricsCollector{
 		metrics: metrics,
 		logger:  logger,
@@ -112,11 +112,11 @@ func (pmc *PolicyMetricsCollector) CollectPolicyMetrics(ctx context.Context, pol
 // WorkloadMetricsCollector collects workload-specific metrics
 type WorkloadMetricsCollector struct {
 	metrics *Metrics
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewWorkloadMetricsCollector creates a new workload metrics collector
-func NewWorkloadMetricsCollector(metrics *Metrics, logger *types.Logger) *WorkloadMetricsCollector {
+func NewWorkloadMetricsCollector(metrics *Metrics, logger types.Logger) *WorkloadMetricsCollector {
 	return &WorkloadMetricsCollector{
 		metrics: metrics,
 		logger:  logger,
@@ -145,11 +145,11 @@ func (wmc *WorkloadMetricsCollector) CollectWorkloadMetrics(ctx context.Context,
 // AutomationMetricsCollector collects automation-specific metrics
 type AutomationMetricsCollector struct {
 	metrics *Metrics
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewAutomationMetricsCollector creates a new automation metrics collector
-func NewAutomationMetricsCollector(metrics *Metrics, logger *types.Logger) *AutomationMetricsCollector {
+func NewAutomationMetricsCollector(metrics *Metrics, logger types.Logger) *AutomationMetricsCollector {
 	return &AutomationMetricsCollector{
 		metrics: metrics,
 		logger:  logger,
@@ -172,11 +172,11 @@ func (amc *AutomationMetricsCollector) CollectAutomationMetrics(ctx context.Cont
 // CustomMetricsCollector allows for custom metric collection
 type CustomMetricsCollector struct {
 	metrics *Metrics
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewCustomMetricsCollector creates a new custom metrics collector
-func NewCustomMetricsCollector(metrics *Metrics, logger *types.Logger) *CustomMetricsCollector {
+func NewCustomMetricsCollector(metrics *Metrics, logger types.Logger) *CustomMetricsCollector {
 	return &CustomMetricsCollector{
 		metrics: metrics,
 		logger:  logger,
@@ -201,11 +201,11 @@ type MetricsManager struct {
 	workloadMetricsCollector   *WorkloadMetricsCollector
 	automationMetricsCollector *AutomationMetricsCollector
 	customMetricsCollector     *CustomMetricsCollector
-	logger                     *types.Logger
+	logger                     types.Logger
 }
 
 // NewMetricsManager creates a new metrics manager
-func NewMetricsManager(metrics *Metrics, logger *types.Logger) *MetricsManager {
+func NewMetricsManager(metrics *Metrics, logger types.Logger) *MetricsManager {
 	return &MetricsManager{
 		systemMetricsCollector:     NewSystemMetricsCollector(metrics, logger),
 		policyMetricsCollector:     NewPolicyMetricsCollector(metrics, logger),

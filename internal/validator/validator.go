@@ -11,11 +11,11 @@ import (
 
 // Validator provides policy validation functionality
 type Validator struct {
-	logger *types.Logger
+	logger types.Logger
 }
 
 // NewValidator creates a new validator instance
-func NewValidator(logger *types.Logger) *Validator {
+func NewValidator(logger types.Logger) *Validator {
 	return &Validator{
 		logger: logger,
 	}

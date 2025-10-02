@@ -14,11 +14,11 @@ import (
 
 // ruleEngine implements RuleEngine interface using expr library
 type ruleEngine struct {
-	logger *types.Logger
+	logger types.Logger
 }
 
 // NewRuleEngine creates a new rule engine
-func NewRuleEngine(logger *types.Logger) RuleEngine {
+func NewRuleEngine(logger types.Logger) RuleEngine {
 	return &ruleEngine{
 		logger: logger,
 	}

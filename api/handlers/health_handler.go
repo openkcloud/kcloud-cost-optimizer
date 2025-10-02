@@ -16,11 +16,11 @@ type HealthHandler struct {
 	storage    storage.StorageManager
 	evaluator  evaluator.EvaluationEngine
 	automation automation.AutomationEngine
-	logger     *types.Logger
+	logger     types.Logger
 }
 
 // NewHealthHandler creates a new health handler
-func NewHealthHandler(storage storage.StorageManager, evaluator evaluator.EvaluationEngine, automation automation.AutomationEngine, logger *types.Logger) *HealthHandler {
+func NewHealthHandler(storage storage.StorageManager, evaluator evaluator.EvaluationEngine, automation automation.AutomationEngine, logger types.Logger) *HealthHandler {
 	return &HealthHandler{
 		storage:    storage,
 		evaluator:  evaluator,

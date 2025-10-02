@@ -12,7 +12,7 @@ import (
 // baseExecutor provides common functionality for action executors
 type baseExecutor struct {
 	actionTypes []string
-	logger      *types.Logger
+	logger      types.Logger
 }
 
 // CanExecute checks if this executor can handle the given action type
@@ -49,7 +49,7 @@ type scheduleExecutor struct {
 }
 
 // NewScheduleExecutor creates a new schedule executor
-func NewScheduleExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewScheduleExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &scheduleExecutor{
 		baseExecutor: baseExecutor{
 			actionTypes: []string{ActionTypeSchedule},
@@ -131,7 +131,7 @@ type notifyExecutor struct {
 }
 
 // NewNotifyExecutor creates a new notify executor
-func NewNotifyExecutor(logger *types.Logger) ActionExecutor {
+func NewNotifyExecutor(logger types.Logger) ActionExecutor {
 	return &notifyExecutor{
 		baseExecutor: baseExecutor{
 			actionTypes: []string{ActionTypeNotify},
@@ -174,7 +174,7 @@ type updateExecutor struct {
 }
 
 // NewUpdateExecutor creates a new update executor
-func NewUpdateExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewUpdateExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &updateExecutor{
 		baseExecutor: baseExecutor{
 			actionTypes: []string{ActionTypeUpdate},
@@ -260,7 +260,7 @@ type terminateExecutor struct {
 }
 
 // NewTerminateExecutor creates a new terminate executor
-func NewTerminateExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewTerminateExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &terminateExecutor{
 		baseExecutor: baseExecutor{
 			actionTypes: []string{ActionTypeTerminate},
@@ -343,7 +343,7 @@ type suspendExecutor struct {
 }
 
 // NewSuspendExecutor creates a new suspend executor
-func NewSuspendExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewSuspendExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &suspendExecutor{
 		baseExecutor: baseExecutor{
 			actionTypes: []string{ActionTypeSuspend},
@@ -426,7 +426,7 @@ type resumeExecutor struct {
 }
 
 // NewResumeExecutor creates a new resume executor
-func NewResumeExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewResumeExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &resumeExecutor{
 		baseExecutor: baseExecutor{
 			actionTypes: []string{ActionTypeResume},

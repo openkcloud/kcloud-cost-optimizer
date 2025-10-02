@@ -21,7 +21,7 @@ func NewHandlers(
 	storage storage.StorageManager,
 	evaluator evaluator.EvaluationEngine,
 	automation automation.AutomationEngine,
-	logger *types.Logger,
+	logger types.Logger,
 ) *Handlers {
 	return &Handlers{
 		Policy:     NewPolicyHandler(storage, logger),

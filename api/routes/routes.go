@@ -7,11 +7,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/kcloud-opt/policy/api/handlers"
-	"github.com/kcloud-opt/policy/internal/automation"
 	"github.com/kcloud-opt/policy/internal/config"
-	"github.com/kcloud-opt/policy/internal/evaluator"
 	"github.com/kcloud-opt/policy/internal/logger"
-	"github.com/kcloud-opt/policy/internal/storage"
 )
 
 // Router sets up all the routes for the policy engine API

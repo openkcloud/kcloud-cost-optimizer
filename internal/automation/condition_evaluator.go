@@ -12,11 +12,11 @@ import (
 
 // conditionEvaluator implements ConditionEvaluator interface
 type conditionEvaluator struct {
-	logger *types.Logger
+	logger types.Logger
 }
 
 // NewConditionEvaluator creates a new condition evaluator
-func NewConditionEvaluator(logger *types.Logger) ConditionEvaluator {
+func NewConditionEvaluator(logger types.Logger) ConditionEvaluator {
 	return &conditionEvaluator{
 		logger: logger,
 	}

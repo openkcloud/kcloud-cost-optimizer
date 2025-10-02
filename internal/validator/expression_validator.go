@@ -11,11 +11,11 @@ import (
 
 // ExpressionValidator provides expression validation functionality
 type ExpressionValidator struct {
-	logger *types.Logger
+	logger types.Logger
 }
 
 // NewExpressionValidator creates a new expression validator instance
-func NewExpressionValidator(logger *types.Logger) *ExpressionValidator {
+func NewExpressionValidator(logger types.Logger) *ExpressionValidator {
 	return &ExpressionValidator{
 		logger: logger,
 	}

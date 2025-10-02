@@ -15,11 +15,11 @@ type evaluationEngine struct {
 	policyEvaluator  PolicyEvaluator
 	conflictResolver ConflictResolver
 	storage          storage.StorageManager
-	logger           *types.Logger
+	logger           types.Logger
 }
 
 // NewEvaluationEngine creates a new evaluation engine
-func NewEvaluationEngine(policyEvaluator PolicyEvaluator, conflictResolver ConflictResolver, storage storage.StorageManager, logger *types.Logger) EvaluationEngine {
+func NewEvaluationEngine(policyEvaluator PolicyEvaluator, conflictResolver ConflictResolver, storage storage.StorageManager, logger types.Logger) EvaluationEngine {
 	return &evaluationEngine{
 		policyEvaluator:  policyEvaluator,
 		conflictResolver: conflictResolver,

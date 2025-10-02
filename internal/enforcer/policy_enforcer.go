@@ -14,13 +14,13 @@ import (
 type policyEnforcer struct {
 	enforcementEngine EnforcementEngine
 	storage           storage.StorageManager
-	logger            *types.Logger
+	logger            types.Logger
 	enforcements      map[string]*EnforcementStatus
 	mu                sync.RWMutex
 }
 
 // NewPolicyEnforcer creates a new policy enforcer
-func NewPolicyEnforcer(enforcementEngine EnforcementEngine, storage storage.StorageManager, logger *types.Logger) PolicyEnforcer {
+func NewPolicyEnforcer(enforcementEngine EnforcementEngine, storage storage.StorageManager, logger types.Logger) PolicyEnforcer {
 	return &policyEnforcer{
 		enforcementEngine: enforcementEngine,
 		storage:           storage,

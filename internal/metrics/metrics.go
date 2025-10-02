@@ -58,11 +58,11 @@ type Metrics struct {
 	SystemCPUUsage    prometheus.Gauge
 	SystemGoroutines  prometheus.Gauge
 
-	logger *types.Logger
+	logger types.Logger
 }
 
 // NewMetrics creates a new metrics instance
-func NewMetrics(logger *types.Logger) *Metrics {
+func NewMetrics(logger types.Logger) *Metrics {
 	return &Metrics{
 		logger: logger,
 	}

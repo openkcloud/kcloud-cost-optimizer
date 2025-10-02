@@ -12,7 +12,7 @@ import (
 // baseActionExecutor provides common functionality for action executors
 type baseActionExecutor struct {
 	actionTypes []string
-	logger      *types.Logger
+	logger      types.Logger
 }
 
 // CanExecute checks if this executor can handle the given action type
@@ -36,7 +36,7 @@ type notifyActionExecutor struct {
 }
 
 // NewNotifyActionExecutor creates a new notify action executor
-func NewNotifyActionExecutor(logger *types.Logger) ActionExecutor {
+func NewNotifyActionExecutor(logger types.Logger) ActionExecutor {
 	return &notifyActionExecutor{
 		baseActionExecutor: baseActionExecutor{
 			actionTypes: []string{ActionTypeNotify},
@@ -83,7 +83,7 @@ type scaleActionExecutor struct {
 }
 
 // NewScaleActionExecutor creates a new scale action executor
-func NewScaleActionExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewScaleActionExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &scaleActionExecutor{
 		baseActionExecutor: baseActionExecutor{
 			actionTypes: []string{ActionTypeScale},
@@ -183,7 +183,7 @@ type migrateActionExecutor struct {
 }
 
 // NewMigrateActionExecutor creates a new migrate action executor
-func NewMigrateActionExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewMigrateActionExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &migrateActionExecutor{
 		baseActionExecutor: baseActionExecutor{
 			actionTypes: []string{ActionTypeMigrate},
@@ -281,7 +281,7 @@ type terminateActionExecutor struct {
 }
 
 // NewTerminateActionExecutor creates a new terminate action executor
-func NewTerminateActionExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewTerminateActionExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &terminateActionExecutor{
 		baseActionExecutor: baseActionExecutor{
 			actionTypes: []string{ActionTypeTerminate},
@@ -364,7 +364,7 @@ type updateActionExecutor struct {
 }
 
 // NewUpdateActionExecutor creates a new update action executor
-func NewUpdateActionExecutor(storage storage.StorageManager, logger *types.Logger) ActionExecutor {
+func NewUpdateActionExecutor(storage storage.StorageManager, logger types.Logger) ActionExecutor {
 	return &updateActionExecutor{
 		baseActionExecutor: baseActionExecutor{
 			actionTypes: []string{ActionTypeUpdate},

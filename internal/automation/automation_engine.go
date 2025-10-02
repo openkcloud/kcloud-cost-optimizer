@@ -22,7 +22,7 @@ type automationEngine struct {
 	ruleStatuses       map[string]*RuleStatus
 	running            bool
 	mu                 sync.RWMutex
-	logger             *types.Logger
+	logger             types.Logger
 	stopChan           chan struct{}
 }
 
@@ -32,7 +32,7 @@ func NewAutomationEngine(
 	ruleExecutor RuleExecutor,
 	conditionEvaluator ConditionEvaluator,
 	scheduler Scheduler,
-	logger *types.Logger,
+	logger types.Logger,
 ) AutomationEngine {
 	return &automationEngine{
 		storage:            storage,

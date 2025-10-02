@@ -13,11 +13,11 @@ import (
 // PolicyHandler handles policy-related HTTP requests
 type PolicyHandler struct {
 	storage storage.StorageManager
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewPolicyHandler creates a new policy handler
-func NewPolicyHandler(storage storage.StorageManager, logger *types.Logger) *PolicyHandler {
+func NewPolicyHandler(storage storage.StorageManager, logger types.Logger) *PolicyHandler {
 	return &PolicyHandler{
 		storage: storage,
 		logger:  logger,

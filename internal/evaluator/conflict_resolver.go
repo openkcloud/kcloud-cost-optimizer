@@ -11,11 +11,11 @@ import (
 
 // conflictResolver implements ConflictResolver interface
 type conflictResolver struct {
-	logger *types.Logger
+	logger types.Logger
 }
 
 // NewConflictResolver creates a new conflict resolver
-func NewConflictResolver(logger *types.Logger) ConflictResolver {
+func NewConflictResolver(logger types.Logger) ConflictResolver {
 	return &conflictResolver{
 		logger: logger,
 	}

@@ -14,7 +14,7 @@ type ValidationEngine struct {
 	policyValidator     PolicyValidator
 	schemaValidator     SchemaValidator
 	expressionValidator ExpressionValidator
-	logger              *types.Logger
+	logger              types.Logger
 	metrics             *ValidationMetrics
 	mu                  sync.RWMutex
 }
@@ -29,7 +29,7 @@ type ValidationMetrics struct {
 }
 
 // NewValidationEngine creates a new validation engine
-func NewValidationEngine(logger *types.Logger) *ValidationEngine {
+func NewValidationEngine(logger types.Logger) *ValidationEngine {
 	return &ValidationEngine{
 		logger:  logger,
 		metrics: &ValidationMetrics{},

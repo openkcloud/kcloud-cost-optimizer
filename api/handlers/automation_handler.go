@@ -15,11 +15,11 @@ import (
 type AutomationHandler struct {
 	storage    storage.StorageManager
 	automation automation.AutomationEngine
-	logger     *types.Logger
+	logger     types.Logger
 }
 
 // NewAutomationHandler creates a new automation handler
-func NewAutomationHandler(storage storage.StorageManager, automation automation.AutomationEngine, logger *types.Logger) *AutomationHandler {
+func NewAutomationHandler(storage storage.StorageManager, automation automation.AutomationEngine, logger types.Logger) *AutomationHandler {
 	return &AutomationHandler{
 		storage:    storage,
 		automation: automation,
@@ -68,8 +68,8 @@ func (h *AutomationHandler) CreateAutomationRule(c *gin.Context) {
 	h.logger.WithDuration(duration).Info("automation rule created successfully", "rule_id", rule.ID)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Automation rule created successfully",
-		"rule":    rule,
+		"message":  "Automation rule created successfully",
+		"rule":     rule,
 		"duration": duration.String(),
 	})
 }
