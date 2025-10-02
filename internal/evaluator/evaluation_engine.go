@@ -184,6 +184,27 @@ func (ee *evaluationEngine) Health(ctx context.Context) error {
 	return nil
 }
 
+// GetMetrics returns evaluation engine metrics
+func (ee *evaluationEngine) GetMetrics(ctx context.Context) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"engine_type": "policy_evaluation",
+		"components": map[string]interface{}{
+			"policy_evaluator":  ee.policyEvaluator != nil,
+			"conflict_resolver": ee.conflictResolver != nil,
+			"storage_manager":   ee.storageManager != nil,
+		},
+	}
+
+	// Add policy evaluator metrics if available
+	if policyEvaluator, ok := ee.policyEvaluator.(*policyEvaluator); ok {
+		metrics["policy_evaluator_metrics"] = map[string]interface{}{
+			"evaluations_count": policyEvaluator.evaluationCount,
+		}
+	}
+
+	return metrics, nil
+}
+
 // Helper methods
 
 // determineDecisionType determines the decision type based on evaluation result

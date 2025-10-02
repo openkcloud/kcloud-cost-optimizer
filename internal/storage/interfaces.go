@@ -291,6 +291,9 @@ type StorageManager interface {
 	// Transaction support
 	BeginTransaction(ctx context.Context) (Transaction, error)
 
+	// Metrics and monitoring
+	GetMetrics(ctx context.Context) (map[string]interface{}, error)
+
 	// Health and maintenance
 	Health(ctx context.Context) error
 	Close() error

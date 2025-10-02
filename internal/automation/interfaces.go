@@ -20,6 +20,27 @@ type AutomationEngine interface {
 	// UnregisterRule unregisters an automation rule
 	UnregisterRule(ctx context.Context, ruleID string) error
 
+	// CreateRule creates a new automation rule
+	CreateRule(ctx context.Context, rule *AutomationRule) error
+
+	// GetRule gets an automation rule by ID
+	GetRule(ctx context.Context, ruleID string) (*AutomationRule, error)
+
+	// UpdateRule updates an existing automation rule
+	UpdateRule(ctx context.Context, rule *AutomationRule) error
+
+	// DeleteRule deletes an automation rule
+	DeleteRule(ctx context.Context, ruleID string) error
+
+	// ListRules lists all automation rules
+	ListRules(ctx context.Context) ([]*AutomationRule, error)
+
+	// EnableRule enables an automation rule
+	EnableRule(ctx context.Context, ruleID string) error
+
+	// DisableRule disables an automation rule
+	DisableRule(ctx context.Context, ruleID string) error
+
 	// TriggerRule manually triggers a rule
 	TriggerRule(ctx context.Context, ruleID string, context map[string]interface{}) error
 
@@ -28,6 +49,12 @@ type AutomationEngine interface {
 
 	// GetRules returns all registered rules
 	GetRules(ctx context.Context) ([]*AutomationRule, error)
+
+	// GetMetrics returns automation engine metrics
+	GetMetrics(ctx context.Context) (map[string]interface{}, error)
+
+	// Initialize initializes the automation engine
+	Initialize(ctx context.Context) error
 
 	// Health checks the health of the automation engine
 	Health(ctx context.Context) error

@@ -161,6 +161,52 @@ func (ae *automationEngine) DisableRule(ctx context.Context, ruleID string) erro
 	return nil
 }
 
+// Initialize initializes the automation engine
+func (ae *automationEngine) Initialize(ctx context.Context) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	// Initialize components
+	if ae.ruleExecutor != nil {
+		// Initialize rule executor if needed
+	}
+
+	if ae.conditionEvaluator != nil {
+		// Initialize condition evaluator if needed
+	}
+
+	if ae.scheduler != nil {
+		// Initialize scheduler if needed
+	}
+
+	return nil
+}
+
+// GetMetrics returns automation engine metrics
+func (ae *automationEngine) GetMetrics(ctx context.Context) (map[string]interface{}, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	metrics := map[string]interface{}{
+		"total_rules":    len(ae.rules),
+		"enabled_rules":  0,
+		"disabled_rules": 0,
+		"running":        ae.running,
+		"rule_statuses":  len(ae.ruleStatuses),
+	}
+
+	// Count enabled/disabled rules
+	for _, rule := range ae.rules {
+		if rule.Enabled {
+			metrics["enabled_rules"] = metrics["enabled_rules"].(int) + 1
+		} else {
+			metrics["disabled_rules"] = metrics["disabled_rules"].(int) + 1
+		}
+	}
+
+	return metrics, nil
+}
+
 // Start starts the automation engine
 func (ae *automationEngine) Start(ctx context.Context) error {
 	ae.mu.Lock()

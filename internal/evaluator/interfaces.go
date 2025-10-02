@@ -220,6 +220,9 @@ type EvaluationEngine interface {
 	// GetRecommendedDecision gets the recommended decision based on evaluation results
 	GetRecommendedDecision(ctx context.Context, results []*types.EvaluationResult) (*types.Decision, error)
 
+	// GetMetrics returns evaluation engine metrics
+	GetMetrics(ctx context.Context) (map[string]interface{}, error)
+
 	// Health checks the health of the evaluation engine
 	Health(ctx context.Context) error
 }

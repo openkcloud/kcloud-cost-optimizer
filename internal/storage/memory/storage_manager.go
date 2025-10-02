@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/kcloud-opt/policy/internal/storage"
@@ -26,6 +27,11 @@ func NewMemoryStorageManager() storage.StorageManager {
 		evaluationStore: NewMemoryEvaluationStore(),
 		closed:          false,
 	}
+}
+
+// NewStorageManager creates a new storage manager (alias for NewMemoryStorageManager)
+func NewStorageManager() storage.StorageManager {
+	return NewMemoryStorageManager()
 }
 
 // Policy returns the policy store
@@ -91,6 +97,49 @@ func (m *memoryStorageManager) BeginTransaction(ctx context.Context) (storage.Tr
 		manager: m,
 		ctx:     ctx,
 	}, nil
+}
+
+// GetMetrics returns storage manager metrics
+func (m *memoryStorageManager) GetMetrics(ctx context.Context) (map[string]interface{}, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.closed {
+		return nil, fmt.Errorf("storage manager is closed")
+	}
+
+	// Get metrics from each store
+	metrics := map[string]interface{}{
+		"storage_type": "memory",
+		"closed":       m.closed,
+	}
+
+	// Add store-specific metrics if available
+	if policyStore, ok := m.policyStore.(*memoryPolicyStore); ok {
+		policyStore.mu.RLock()
+		metrics["policies_count"] = len(policyStore.policies)
+		policyStore.mu.RUnlock()
+	}
+
+	if workloadStore, ok := m.workloadStore.(*memoryWorkloadStore); ok {
+		workloadStore.mu.RLock()
+		metrics["workloads_count"] = len(workloadStore.workloads)
+		workloadStore.mu.RUnlock()
+	}
+
+	if decisionStore, ok := m.decisionStore.(*memoryDecisionStore); ok {
+		decisionStore.mu.RLock()
+		metrics["decisions_count"] = len(decisionStore.decisions)
+		decisionStore.mu.RUnlock()
+	}
+
+	if evaluationStore, ok := m.evaluationStore.(*memoryEvaluationStore); ok {
+		evaluationStore.mu.RLock()
+		metrics["evaluations_count"] = len(evaluationStore.evaluations)
+		evaluationStore.mu.RUnlock()
+	}
+
+	return metrics, nil
 }
 
 // Health checks the health of all stores
