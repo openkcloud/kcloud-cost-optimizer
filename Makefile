@@ -351,6 +351,30 @@ cli-demo: build-cli ## Run CLI demo
 	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 evaluate workload sample-workload || echo "Evaluation failed (server may not be running)"
 	@echo "CLI demo completed"
 
+# Integration test targets
+.PHONY: test-integration
+test-integration: build build-cli ## Run integration tests
+	@echo "Running integration tests..."
+	@go test -v -timeout 30m ./tests/...
+
+.PHONY: test-cli-integration
+test-cli-integration: build-cli ## Run CLI integration tests
+	@echo "Running CLI integration tests..."
+	@go test -v -timeout 30m ./tests/cli_integration_test.go
+
+.PHONY: test-system-validation
+test-system-validation: ## Run comprehensive system validation
+	@echo "Running comprehensive system validation..."
+	@./scripts/system-validation.sh
+
+.PHONY: test-all
+test-all: test test-integration test-cli-integration ## Run all tests (unit, integration, CLI)
+	@echo "All tests completed successfully"
+
+.PHONY: validate-system
+validate-system: test-all ## Validate entire system (alias for test-all)
+	@echo "System validation completed successfully"
+
 # Version information
 .PHONY: version
 version: ## Show version information
