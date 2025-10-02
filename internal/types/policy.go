@@ -11,6 +11,11 @@ type Logger interface {
 	Error(msg string, fields ...interface{})
 	Debug(msg string, fields ...interface{})
 	Fatal(msg string, fields ...interface{})
+	WithError(err error) Logger
+	WithDuration(duration time.Duration) Logger
+	WithPolicy(policyID, policyName string) Logger
+	WithWorkload(workloadID, workloadType string) Logger
+	WithEvaluation(evaluationID string) Logger
 }
 
 // PolicyType represents the type of policy
@@ -178,23 +183,23 @@ type AutomationRulePolicy struct {
 
 // AutomationRuleSpec defines automation rule specification
 type AutomationRuleSpec struct {
-	Priority   Priority    `json:"priority" yaml:"priority"`
-	Conditions []Condition `json:"conditions" yaml:"conditions"`
-	Actions    []Action    `json:"actions" yaml:"actions"`
-	Exceptions []Exception `json:"exceptions,omitempty" yaml:"exceptions,omitempty"`
-	Schedule   *Schedule   `json:"schedule,omitempty" yaml:"schedule,omitempty"`
+	Priority   Priority              `json:"priority" yaml:"priority"`
+	Conditions []AutomationCondition `json:"conditions" yaml:"conditions"`
+	Actions    []AutomationAction    `json:"actions" yaml:"actions"`
+	Exceptions []Exception           `json:"exceptions,omitempty" yaml:"exceptions,omitempty"`
+	Schedule   *Schedule             `json:"schedule,omitempty" yaml:"schedule,omitempty"`
 }
 
-// Condition represents a condition for automation
-type Condition struct {
+// AutomationCondition represents a condition for automation
+type AutomationCondition struct {
 	Field    string      `json:"field" yaml:"field"`
 	Operator string      `json:"operator" yaml:"operator"`
 	Value    interface{} `json:"value" yaml:"value"`
 	Duration *string     `json:"duration,omitempty" yaml:"duration,omitempty"`
 }
 
-// Action represents an automation action
-type Action struct {
+// AutomationAction represents an automation action
+type AutomationAction struct {
 	Type        string                 `json:"type" yaml:"type"`
 	Target      string                 `json:"target,omitempty" yaml:"target,omitempty"`
 	Message     string                 `json:"message,omitempty" yaml:"message,omitempty"`
