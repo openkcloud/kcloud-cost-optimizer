@@ -59,20 +59,32 @@ build: clean ## Build the application binary
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PACKAGE)
 	@echo "Build completed: $(BUILD_DIR)/$(BINARY_NAME)"
 
+.PHONY: build-cli
+build-cli: clean ## Build the CLI binary
+	@echo "Building CLI binary..."
+	@mkdir -p $(BUILD_DIR)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli ./cmd/cli/main.go
+	@echo "CLI build completed: $(BUILD_DIR)/policy-cli"
+
 .PHONY: build-all
 build-all: clean ## Build binaries for all platforms
 	@echo "Building $(APP_NAME) for all platforms..."
 	@mkdir -p $(BUILD_DIR)
 	@echo "Building for Linux AMD64..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-amd64 ./cmd/cli/main.go
 	@echo "Building for Linux ARM64..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-arm64 ./cmd/cli/main.go
 	@echo "Building for macOS AMD64..."
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-amd64 ./cmd/cli/main.go
 	@echo "Building for macOS ARM64..."
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-arm64 ./cmd/cli/main.go
 	@echo "Building for Windows AMD64..."
 	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-windows-amd64.exe ./cmd/cli/main.go
 	@echo "Build completed for all platforms"
 
 .PHONY: install
@@ -80,6 +92,12 @@ install: build ## Install the binary to GOPATH/bin
 	@echo "Installing $(APP_NAME)..."
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(GOPATH)/bin/
 	@echo "Installed to $(GOPATH)/bin/$(BINARY_NAME)"
+
+.PHONY: install-cli
+install-cli: build-cli ## Install the CLI binary to GOPATH/bin
+	@echo "Installing CLI..."
+	@cp $(BUILD_DIR)/policy-cli $(GOPATH)/bin/
+	@echo "CLI installed to $(GOPATH)/bin/policy-cli"
 
 # Test targets
 .PHONY: test
@@ -309,6 +327,29 @@ load-policies: ## Load example policies
 list-policies: ## List all policies
 	@echo "Listing all policies..."
 	@curl -s http://localhost:8005/api/v1/policies | jq '.' || echo "Failed to list policies"
+
+# CLI targets
+.PHONY: cli-test
+cli-test: build-cli ## Test CLI functionality
+	@echo "Testing CLI functionality..."
+	@$(BUILD_DIR)/policy-cli --help
+	@$(BUILD_DIR)/policy-cli policy --help
+	@$(BUILD_DIR)/policy-cli workload --help
+	@$(BUILD_DIR)/policy-cli evaluate --help
+	@$(BUILD_DIR)/policy-cli automation --help
+	@$(BUILD_DIR)/policy-cli status --help
+	@echo "CLI test completed"
+
+.PHONY: cli-demo
+cli-demo: build-cli ## Run CLI demo
+	@echo "Running CLI demo..."
+	@echo "1. Creating policy..."
+	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 policy create examples/policies/cost-optimization-policy.yaml || echo "Policy creation failed (server may not be running)"
+	@echo "2. Creating workload..."
+	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 workload create examples/workloads/sample-workload.yaml || echo "Workload creation failed (server may not be running)"
+	@echo "3. Evaluating workload..."
+	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 evaluate workload sample-workload || echo "Evaluation failed (server may not be running)"
+	@echo "CLI demo completed"
 
 # Version information
 .PHONY: version
