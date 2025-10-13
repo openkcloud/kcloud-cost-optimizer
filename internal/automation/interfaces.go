@@ -2,6 +2,7 @@ package automation
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -19,6 +20,27 @@ type AutomationEngine interface {
 	// UnregisterRule unregisters an automation rule
 	UnregisterRule(ctx context.Context, ruleID string) error
 
+	// CreateRule creates a new automation rule
+	CreateRule(ctx context.Context, rule *AutomationRule) error
+
+	// GetRule gets an automation rule by ID
+	GetRule(ctx context.Context, ruleID string) (*AutomationRule, error)
+
+	// UpdateRule updates an existing automation rule
+	UpdateRule(ctx context.Context, rule *AutomationRule) error
+
+	// DeleteRule deletes an automation rule
+	DeleteRule(ctx context.Context, ruleID string) error
+
+	// ListRules lists all automation rules
+	ListRules(ctx context.Context) ([]*AutomationRule, error)
+
+	// EnableRule enables an automation rule
+	EnableRule(ctx context.Context, ruleID string) error
+
+	// DisableRule disables an automation rule
+	DisableRule(ctx context.Context, ruleID string) error
+
 	// TriggerRule manually triggers a rule
 	TriggerRule(ctx context.Context, ruleID string, context map[string]interface{}) error
 
@@ -28,6 +50,24 @@ type AutomationEngine interface {
 	// GetRules returns all registered rules
 	GetRules(ctx context.Context) ([]*AutomationRule, error)
 
+	// GetMetrics returns automation engine metrics
+	GetMetrics(ctx context.Context) (map[string]interface{}, error)
+
+	// Initialize initializes the automation engine
+	Initialize(ctx context.Context) error
+
+	// CountRules returns the count of automation rules
+	CountRules(ctx context.Context) (int64, error)
+
+	// ExecuteRule executes a specific rule
+	ExecuteRule(ctx context.Context, ruleID string, context map[string]interface{}) error
+
+	// GetRuleHistory gets the execution history of a rule
+	GetRuleHistory(ctx context.Context, ruleID string, filters *RuleFilters) ([]*RuleExecution, error)
+
+	// GetStatistics gets automation engine statistics
+	GetStatistics(ctx context.Context, filters *RuleFilters) (map[string]interface{}, error)
+
 	// Health checks the health of the automation engine
 	Health(ctx context.Context) error
 }
@@ -36,6 +76,7 @@ type AutomationEngine interface {
 type AutomationRule struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
 	Description string                 `json:"description,omitempty"`
 	Enabled     bool                   `json:"enabled"`
 	Priority    int                    `json:"priority"`
@@ -46,6 +87,23 @@ type AutomationRule struct {
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	CreatedAt   time.Time              `json:"createdAt"`
 	UpdatedAt   time.Time              `json:"updatedAt"`
+}
+
+// Validate validates the automation rule
+func (r *AutomationRule) Validate() error {
+	if r.ID == "" {
+		return fmt.Errorf("rule ID is required")
+	}
+	if r.Name == "" {
+		return fmt.Errorf("rule name is required")
+	}
+	if len(r.Conditions) == 0 {
+		return fmt.Errorf("at least one condition is required")
+	}
+	if len(r.Actions) == 0 {
+		return fmt.Errorf("at least one action is required")
+	}
+	return nil
 }
 
 // Condition represents a condition for automation
@@ -96,6 +154,9 @@ type RuleStatus struct {
 	RuleID         string                 `json:"ruleId"`
 	Name           string                 `json:"name"`
 	Status         RuleExecutionStatus    `json:"status"`
+	LastChecked    time.Time              `json:"lastChecked"`
+	CreatedAt      time.Time              `json:"createdAt"`
+	LastUpdated    time.Time              `json:"lastUpdated"`
 	LastExecuted   *time.Time             `json:"lastExecuted,omitempty"`
 	NextExecution  *time.Time             `json:"nextExecution,omitempty"`
 	ExecutionCount int64                  `json:"executionCount"`
@@ -265,3 +326,39 @@ const (
 	OperatorIn                 = "in"
 	OperatorNotIn              = "not_in"
 )
+
+// AutomationTrigger represents a trigger for automation
+type AutomationTrigger struct {
+	Type       string                 `json:"type"`
+	Name       string                 `json:"name"`
+	Condition  string                 `json:"condition"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
+	Enabled    bool                   `json:"enabled"`
+}
+
+// RuleFilters defines filters for rule queries
+type RuleFilters struct {
+	Type      *string                `json:"type,omitempty"`
+	Status    *string                `json:"status,omitempty"`
+	Enabled   *bool                  `json:"enabled,omitempty"`
+	Priority  *int                   `json:"priority,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	StartTime *time.Time             `json:"startTime,omitempty"`
+	EndTime   *time.Time             `json:"endTime,omitempty"`
+	Limit     int                    `json:"limit,omitempty"`
+	Offset    int                    `json:"offset,omitempty"`
+}
+
+// RuleExecution represents the execution of an automation rule
+type RuleExecution struct {
+	ID        string                 `json:"id"`
+	RuleID    string                 `json:"ruleId"`
+	Status    RuleExecutionStatus    `json:"status"`
+	StartTime time.Time              `json:"startTime"`
+	EndTime   *time.Time             `json:"endTime,omitempty"`
+	Duration  time.Duration          `json:"duration,omitempty"`
+	Result    map[string]interface{} `json:"result,omitempty"`
+	Error     string                 `json:"error,omitempty"`
+	Context   map[string]interface{} `json:"context,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+}

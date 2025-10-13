@@ -11,6 +11,7 @@ import (
 type WorkloadType string
 
 const (
+	WorkloadTypeDeployment WorkloadType = "deployment"
 	WorkloadTypeMLTraining WorkloadType = "ml_training"
 	WorkloadTypeInference  WorkloadType = "inference"
 	WorkloadTypeBatch      WorkloadType = "batch"
@@ -47,6 +48,15 @@ type Workload struct {
 	Metadata     WorkloadMetadata     `json:"metadata" yaml:"metadata"`
 	CreatedAt    time.Time            `json:"createdAt" yaml:"createdAt"`
 	UpdatedAt    time.Time            `json:"updatedAt" yaml:"updatedAt"`
+}
+
+// Requirements represents resource requirements
+type Requirements struct {
+	CPU     string `json:"cpu" yaml:"cpu"`
+	Memory  string `json:"memory" yaml:"memory"`
+	Storage string `json:"storage,omitempty" yaml:"storage,omitempty"`
+	GPU     string `json:"gpu,omitempty" yaml:"gpu,omitempty"`
+	NPU     string `json:"npu,omitempty" yaml:"npu,omitempty"`
 }
 
 // Resources represents workload resource requirements

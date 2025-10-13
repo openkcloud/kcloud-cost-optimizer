@@ -13,11 +13,11 @@ import (
 // PolicyHandler handles policy-related HTTP requests
 type PolicyHandler struct {
 	storage storage.StorageManager
-	logger  *types.Logger
+	logger  types.Logger
 }
 
 // NewPolicyHandler creates a new policy handler
-func NewPolicyHandler(storage storage.StorageManager, logger *types.Logger) *PolicyHandler {
+func NewPolicyHandler(storage storage.StorageManager, logger types.Logger) *PolicyHandler {
 	return &PolicyHandler{
 		storage: storage,
 		logger:  logger,
@@ -65,8 +65,8 @@ func (h *PolicyHandler) CreatePolicy(c *gin.Context) {
 	h.logger.WithPolicy(policy.GetMetadata().Name, "").WithDuration(duration).Info("policy created successfully")
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Policy created successfully",
-		"policy":  policy,
+		"message":  "Policy created successfully",
+		"policy":   policy,
 		"duration": duration.String(),
 	})
 }

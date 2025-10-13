@@ -13,13 +13,13 @@ import (
 
 // EvaluationHandler handles evaluation-related HTTP requests
 type EvaluationHandler struct {
-	storage    storage.StorageManager
-	evaluator  evaluator.EvaluationEngine
-	logger     *types.Logger
+	storage   storage.StorageManager
+	evaluator evaluator.EvaluationEngine
+	logger    types.Logger
 }
 
 // NewEvaluationHandler creates a new evaluation handler
-func NewEvaluationHandler(storage storage.StorageManager, evaluator evaluator.EvaluationEngine, logger *types.Logger) *EvaluationHandler {
+func NewEvaluationHandler(storage storage.StorageManager, evaluator evaluator.EvaluationEngine, logger types.Logger) *EvaluationHandler {
 	return &EvaluationHandler{
 		storage:   storage,
 		evaluator: evaluator,
@@ -60,7 +60,11 @@ func (h *EvaluationHandler) EvaluateWorkload(c *gin.Context) {
 	}
 
 	// Evaluate workload
-	evaluationResult, err := h.evaluator.EvaluateWorkload(c.Request.Context(), workload, request.PolicyIDs, request.Force)
+	options := &evaluator.EvaluationOptions{
+		PolicyIDs: request.PolicyIDs,
+		Force:     request.Force,
+	}
+	evaluationResult, err := h.evaluator.EvaluateWorkload(c.Request.Context(), workload, options)
 	if err != nil {
 		h.logger.WithError(err).WithWorkload(request.WorkloadID, "").Error("failed to evaluate workload")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -124,14 +128,12 @@ func (h *EvaluationHandler) ListEvaluations(c *gin.Context) {
 
 	// Status filter
 	if status := c.Query("status"); status != "" {
-		es := types.EvaluationStatus(status)
-		filters.Status = &es
+		filters.Status = &status
 	}
 
 	// Result filter
 	if result := c.Query("result"); result != "" {
-		er := types.EvaluationResult(result)
-		filters.Result = &er
+		filters.Result = &result
 	}
 
 	// Time range filters
@@ -190,7 +192,7 @@ func (h *EvaluationHandler) ListEvaluations(c *gin.Context) {
 
 // GetEvaluationHistory handles GET /evaluations/history
 func (h *EvaluationHandler) GetEvaluationHistory(c *gin.Context) {
-	startTime := time.Now()
+	requestStartTime := time.Now()
 
 	// Parse query parameters
 	workloadID := c.Query("workload_id")
@@ -248,11 +250,17 @@ func (h *EvaluationHandler) GetEvaluationHistory(c *gin.Context) {
 	}
 
 	// Get history
-	var history []types.Evaluation
+	var history []*types.Evaluation
+	filters := &storage.EvaluationFilters{
+		StartTime: &startTime,
+		EndTime:   &endTime,
+		Limit:     limit,
+	}
+
 	if workloadID != "" {
-		history, err = h.storage.Evaluation().GetWorkloadHistory(c.Request.Context(), workloadID, startTime, endTime, limit)
+		history, err = h.storage.Evaluation().GetWorkloadHistory(c.Request.Context(), workloadID, filters)
 	} else {
-		history, err = h.storage.Evaluation().GetPolicyHistory(c.Request.Context(), policyID, startTime, endTime, limit)
+		history, err = h.storage.Evaluation().GetPolicyHistory(c.Request.Context(), policyID, filters)
 	}
 
 	if err != nil {
@@ -265,7 +273,7 @@ func (h *EvaluationHandler) GetEvaluationHistory(c *gin.Context) {
 		return
 	}
 
-	duration := time.Since(startTime)
+	duration := time.Since(requestStartTime)
 	h.logger.WithDuration(duration).Info("evaluation history retrieved successfully", "count", len(history))
 
 	c.JSON(http.StatusOK, gin.H{
@@ -277,7 +285,7 @@ func (h *EvaluationHandler) GetEvaluationHistory(c *gin.Context) {
 
 // GetEvaluationStatistics handles GET /evaluations/statistics
 func (h *EvaluationHandler) GetEvaluationStatistics(c *gin.Context) {
-	startTime := time.Now()
+	requestStartTime := time.Now()
 
 	// Parse time range
 	startTimeStr := c.Query("start_time")
@@ -315,7 +323,11 @@ func (h *EvaluationHandler) GetEvaluationStatistics(c *gin.Context) {
 	}
 
 	// Get statistics
-	statistics, err := h.storage.Evaluation().GetStatistics(c.Request.Context(), startTime, endTime)
+	filters := &storage.EvaluationFilters{
+		StartTime: &startTime,
+		EndTime:   &endTime,
+	}
+	statistics, err := h.storage.Evaluation().GetStatistics(c.Request.Context(), filters)
 	if err != nil {
 		h.logger.WithError(err).Error("failed to get evaluation statistics")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -326,7 +338,7 @@ func (h *EvaluationHandler) GetEvaluationStatistics(c *gin.Context) {
 		return
 	}
 
-	duration := time.Since(startTime)
+	duration := time.Since(requestStartTime)
 	h.logger.WithDuration(duration).Info("evaluation statistics retrieved successfully")
 
 	c.JSON(http.StatusOK, gin.H{
@@ -383,13 +395,30 @@ func (h *EvaluationHandler) BulkEvaluateWorkloads(c *gin.Context) {
 	// Bulk evaluate workloads
 	results := make([]types.Evaluation, 0, len(workloads))
 	for _, workload := range workloads {
-		evaluationResult, err := h.evaluator.EvaluateWorkload(c.Request.Context(), workload, request.PolicyIDs, request.Force)
+		options := &evaluator.EvaluationOptions{
+			PolicyIDs: request.PolicyIDs,
+			Force:     request.Force,
+		}
+		evaluationResult, err := h.evaluator.EvaluateWorkload(c.Request.Context(), workload, options)
 		if err != nil {
 			h.logger.WithError(err).WithWorkload(workload.ID, "").Error("failed to evaluate workload in bulk")
 			// Continue with other workloads
 			continue
 		}
-		results = append(results, evaluationResult)
+		// Convert evaluation results to evaluations
+		for _, result := range evaluationResult {
+			evaluation := &types.Evaluation{
+				ID:         result.ID,
+				PolicyID:   result.PolicyID,
+				WorkloadID: result.WorkloadID,
+				Status:     types.EvaluationStatusCompleted,
+				Result:     result,
+				StartTime:  time.Now(),
+				EndTime:    &time.Time{},
+				Duration:   result.Duration,
+			}
+			results = append(results, *evaluation)
+		}
 	}
 
 	duration := time.Since(startTime)
@@ -408,7 +437,7 @@ func (h *EvaluationHandler) GetEvaluationHealth(c *gin.Context) {
 	startTime := time.Now()
 
 	// Get evaluator health
-	health, err := h.evaluator.Health(c.Request.Context())
+	err := h.evaluator.Health(c.Request.Context())
 	if err != nil {
 		h.logger.WithError(err).Error("failed to get evaluator health")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -423,7 +452,7 @@ func (h *EvaluationHandler) GetEvaluationHealth(c *gin.Context) {
 	h.logger.WithDuration(duration).Info("evaluation health check completed")
 
 	c.JSON(http.StatusOK, gin.H{
-		"health":   health,
+		"health":   "healthy",
 		"duration": duration.String(),
 	})
 }

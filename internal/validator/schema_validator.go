@@ -12,12 +12,12 @@ import (
 
 // SchemaValidator provides JSON schema validation functionality
 type SchemaValidator struct {
-	logger  *types.Logger
+	logger  types.Logger
 	schemas map[string]*gojsonschema.Schema
 }
 
 // NewSchemaValidator creates a new schema validator instance
-func NewSchemaValidator(logger *types.Logger) *SchemaValidator {
+func NewSchemaValidator(logger types.Logger) *SchemaValidator {
 	return &SchemaValidator{
 		logger:  logger,
 		schemas: make(map[string]*gojsonschema.Schema),

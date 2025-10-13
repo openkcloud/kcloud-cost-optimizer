@@ -23,6 +23,7 @@ type Config struct {
 type ServerConfig struct {
 	Port         int           `mapstructure:"port"`
 	Host         string        `mapstructure:"host"`
+	Debug        bool          `mapstructure:"debug"`
 	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
 	WriteTimeout time.Duration `mapstructure:"write_timeout"`
 	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
@@ -100,8 +101,16 @@ type KubernetesConfig struct {
 }
 
 // LoadConfig loads configuration from file and environment variables
-func LoadConfig(configPath string) (*Config, error) {
-	viper.SetConfigFile(configPath)
+func LoadConfig(configPath ...string) (*Config, error) {
+	// Set default config path if not provided
+	if len(configPath) > 0 && configPath[0] != "" {
+		viper.SetConfigFile(configPath[0])
+	} else {
+		viper.SetConfigName("config")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("./config")
+		viper.AddConfigPath("/etc/policy-engine")
+	}
 	viper.SetConfigType("yaml")
 
 	// Set default values
@@ -110,9 +119,12 @@ func LoadConfig(configPath string) (*Config, error) {
 	// Enable reading from environment variables
 	viper.AutomaticEnv()
 
-	// Read config file
+	// Read config file (ignore error if file doesn't exist)
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
+		// If it's a file not found error, continue with defaults
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
 	}
 
 	var config Config

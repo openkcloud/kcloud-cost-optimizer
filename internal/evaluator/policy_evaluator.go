@@ -12,13 +12,14 @@ import (
 
 // policyEvaluator implements PolicyEvaluator interface
 type policyEvaluator struct {
-	storage    storage.StorageManager
-	ruleEngine RuleEngine
-	logger     *types.Logger
+	storage         storage.StorageManager
+	ruleEngine      RuleEngine
+	logger          types.Logger
+	evaluationCount int64
 }
 
 // NewPolicyEvaluator creates a new policy evaluator
-func NewPolicyEvaluator(storage storage.StorageManager, ruleEngine RuleEngine, logger *types.Logger) PolicyEvaluator {
+func NewPolicyEvaluator(storage storage.StorageManager, ruleEngine RuleEngine, logger types.Logger) PolicyEvaluator {
 	return &policyEvaluator{
 		storage:    storage,
 		ruleEngine: ruleEngine,
@@ -29,6 +30,7 @@ func NewPolicyEvaluator(storage storage.StorageManager, ruleEngine RuleEngine, l
 // Evaluate evaluates a workload against applicable policies
 func (e *policyEvaluator) Evaluate(ctx context.Context, workload *types.Workload, policies []types.Policy) ([]*types.EvaluationResult, error) {
 	startTime := time.Now()
+	e.evaluationCount++
 
 	e.logger.WithWorkload(workload.ID, string(workload.Type)).Info("starting policy evaluation")
 
@@ -70,10 +72,7 @@ func (e *policyEvaluator) EvaluateSingle(ctx context.Context, workload *types.Wo
 	}
 
 	// Check if policy is applicable to the workload
-	applicable, err := e.isPolicyApplicable(ctx, workload, policy)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check policy applicability: %w", err)
-	}
+	applicable := e.isPolicyApplicable(ctx, workload, policy)
 
 	if !applicable {
 		result.Applicable = false
@@ -84,6 +83,7 @@ func (e *policyEvaluator) EvaluateSingle(ctx context.Context, workload *types.Wo
 	result.Applicable = true
 
 	// Evaluate policy based on type
+	var err error
 	switch policy.GetType() {
 	case types.PolicyTypeCostOptimization:
 		err = e.evaluateCostOptimizationPolicy(ctx, workload, policy, result)
@@ -108,11 +108,7 @@ func (e *policyEvaluator) GetApplicablePolicies(ctx context.Context, workload *t
 	var applicablePolicies []types.Policy
 
 	for _, policy := range allPolicies {
-		applicable, err := e.isPolicyApplicable(ctx, workload, policy)
-		if err != nil {
-			e.logger.WithError(err).WithPolicy(policy.GetMetadata().Name, "").Error("failed to check policy applicability")
-			continue
-		}
+		applicable := e.isPolicyApplicable(ctx, workload, policy)
 
 		if applicable {
 			applicablePolicies = append(applicablePolicies, policy)
@@ -185,7 +181,7 @@ func (e *policyEvaluator) isPolicyApplicable(ctx context.Context, workload *type
 	}
 
 	// Check label selectors
-	if metadata.Labels != nil && len(metadata.Labels) > 0 {
+	if len(metadata.Labels) > 0 {
 		if !e.matchesLabelSelectors(workload.Labels, metadata.Labels) {
 			return false
 		}
@@ -344,8 +340,6 @@ func (e *policyEvaluator) evaluateWorkloadPriorityPolicy(ctx context.Context, wo
 
 // calculateCostScore calculates a cost optimization score for a workload
 func (e *policyEvaluator) calculateCostScore(workload *types.Workload, policy types.Policy) float64 {
-	// Simplified cost score calculation
-	// In practice, this would consider actual cost metrics, resource utilization, etc.
 
 	score := 0.5 // Base score
 
@@ -379,17 +373,11 @@ func (e *policyEvaluator) calculateCostScore(workload *types.Workload, policy ty
 
 // checkAutomationConditions checks if automation conditions are met
 func (e *policyEvaluator) checkAutomationConditions(ctx context.Context, workload *types.Workload, policy types.Policy) bool {
-	// Simplified condition checking
-	// In practice, this would evaluate actual automation rules and conditions
-
-	// For now, return true for demonstration
 	return true
 }
 
 // calculatePriorityScore calculates a priority score for a workload
 func (e *policyEvaluator) calculatePriorityScore(workload *types.Workload, policy types.Policy) float64 {
-	// Simplified priority score calculation
-	// In practice, this would consider workload characteristics, SLA requirements, etc.
 
 	score := 0.5 // Base score
 

@@ -4,6 +4,20 @@ import (
 	"time"
 )
 
+// Logger interface for logging operations
+type Logger interface {
+	Info(msg string, fields ...interface{})
+	Warn(msg string, fields ...interface{})
+	Error(msg string, fields ...interface{})
+	Debug(msg string, fields ...interface{})
+	Fatal(msg string, fields ...interface{})
+	WithError(err error) Logger
+	WithDuration(duration time.Duration) Logger
+	WithPolicy(policyID, policyName string) Logger
+	WithWorkload(workloadID, workloadType string) Logger
+	WithEvaluation(evaluationID string) Logger
+}
+
 // PolicyType represents the type of policy
 type PolicyType string
 
@@ -11,6 +25,7 @@ const (
 	PolicyTypeCostOptimization PolicyType = "CostOptimizationPolicy"
 	PolicyTypeAutomation       PolicyType = "AutomationRule"
 	PolicyTypeWorkloadPriority PolicyType = "WorkloadPriorityPolicy"
+	PolicyTypeResourceQuota    PolicyType = "ResourceQuotaPolicy"
 	PolicyTypeSLA              PolicyType = "SLAPolicy"
 	PolicyTypeSecurity         PolicyType = "SecurityPolicy"
 )
@@ -48,11 +63,78 @@ type BasePolicy struct {
 type PolicyMetadata struct {
 	Name              string            `json:"name" yaml:"name"`
 	Namespace         string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Type              PolicyType        `json:"type" yaml:"type"`
+	Status            PolicyStatus      `json:"status" yaml:"status"`
+	Priority          Priority          `json:"priority" yaml:"priority"`
 	Labels            map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	CreationTimestamp time.Time         `json:"creationTimestamp" yaml:"creationTimestamp"`
 	LastModified      time.Time         `json:"lastModified" yaml:"lastModified"`
 	Version           string            `json:"version" yaml:"version"`
+}
+
+// PolicySpec represents the specification of a policy
+type PolicySpec struct {
+	Type        PolicyType             `json:"type" yaml:"type"`
+	Description string                 `json:"description" yaml:"description"`
+	Objectives  []Objective            `json:"objectives,omitempty" yaml:"objectives,omitempty"`
+	Target      PolicyTarget           `json:"target,omitempty" yaml:"target,omitempty"`
+	Rules       []Rule                 `json:"rules" yaml:"rules"`
+	Targets     []Target               `json:"targets,omitempty" yaml:"targets,omitempty"`
+	Conditions  []Condition            `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Actions     []Action               `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+
+// Objective represents a policy objective
+type Objective struct {
+	Name       string                 `json:"name" yaml:"name"`
+	Type       string                 `json:"type" yaml:"type"`
+	Target     *string                `json:"target,omitempty" yaml:"target,omitempty"`
+	Priority   int                    `json:"priority" yaml:"priority"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+
+// PolicyTarget represents the target of a policy
+type PolicyTarget struct {
+	Type      string            `json:"type" yaml:"type"`
+	Selector  map[string]string `json:"selector" yaml:"selector"`
+	Namespace string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+}
+
+// Rule represents a policy rule
+type Rule struct {
+	ID          string                 `json:"id" yaml:"id"`
+	Name        string                 `json:"name" yaml:"name"`
+	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Condition   string                 `json:"condition" yaml:"condition"`
+	Action      string                 `json:"action" yaml:"action"`
+	Priority    int                    `json:"priority" yaml:"priority"`
+	Enabled     bool                   `json:"enabled" yaml:"enabled"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+
+// Target represents a policy target
+type Target struct {
+	Type      string            `json:"type" yaml:"type"`
+	Selector  map[string]string `json:"selector" yaml:"selector"`
+	Namespace string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+}
+
+// Condition represents a policy condition
+type Condition struct {
+	Type      string                 `json:"type" yaml:"type"`
+	Operator  string                 `json:"operator" yaml:"operator"`
+	Value     interface{}            `json:"value" yaml:"value"`
+	Threshold interface{}            `json:"threshold,omitempty" yaml:"threshold,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+// Action represents a policy action
+type Action struct {
+	Type       string                 `json:"type" yaml:"type"`
+	Name       string                 `json:"name" yaml:"name"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
 // CostOptimizationPolicy represents cost optimization policy
@@ -66,15 +148,15 @@ type CostOptimizationPolicy struct {
 
 // CostOptimizationSpec defines cost optimization policy specification
 type CostOptimizationSpec struct {
-	Priority         Priority         `json:"priority" yaml:"priority"`
-	Objectives       []Objective      `json:"objectives" yaml:"objectives"`
-	Constraints      Constraints      `json:"constraints" yaml:"constraints"`
-	WorkloadPolicies []WorkloadPolicy `json:"workloadPolicies" yaml:"workloadPolicies"`
-	Automation       []AutomationRule `json:"automation,omitempty" yaml:"automation,omitempty"`
+	Priority         Priority                `json:"priority" yaml:"priority"`
+	Objectives       []OptimizationObjective `json:"objectives" yaml:"objectives"`
+	Constraints      Constraints             `json:"constraints" yaml:"constraints"`
+	WorkloadPolicies []WorkloadPolicy        `json:"workloadPolicies" yaml:"workloadPolicies"`
+	Automation       []AutomationRule        `json:"automation,omitempty" yaml:"automation,omitempty"`
 }
 
-// Objective represents an optimization objective
-type Objective struct {
+// OptimizationObjective represents a cost optimization objective
+type OptimizationObjective struct {
 	Type   string  `json:"type" yaml:"type"`
 	Weight float64 `json:"weight" yaml:"weight"`
 	Target *string `json:"target,omitempty" yaml:"target,omitempty"`
@@ -120,23 +202,23 @@ type AutomationRulePolicy struct {
 
 // AutomationRuleSpec defines automation rule specification
 type AutomationRuleSpec struct {
-	Priority   Priority    `json:"priority" yaml:"priority"`
-	Conditions []Condition `json:"conditions" yaml:"conditions"`
-	Actions    []Action    `json:"actions" yaml:"actions"`
-	Exceptions []Exception `json:"exceptions,omitempty" yaml:"exceptions,omitempty"`
-	Schedule   *Schedule   `json:"schedule,omitempty" yaml:"schedule,omitempty"`
+	Priority   Priority              `json:"priority" yaml:"priority"`
+	Conditions []AutomationCondition `json:"conditions" yaml:"conditions"`
+	Actions    []AutomationAction    `json:"actions" yaml:"actions"`
+	Exceptions []Exception           `json:"exceptions,omitempty" yaml:"exceptions,omitempty"`
+	Schedule   *Schedule             `json:"schedule,omitempty" yaml:"schedule,omitempty"`
 }
 
-// Condition represents a condition for automation
-type Condition struct {
+// AutomationCondition represents a condition for automation
+type AutomationCondition struct {
 	Field    string      `json:"field" yaml:"field"`
 	Operator string      `json:"operator" yaml:"operator"`
 	Value    interface{} `json:"value" yaml:"value"`
 	Duration *string     `json:"duration,omitempty" yaml:"duration,omitempty"`
 }
 
-// Action represents an automation action
-type Action struct {
+// AutomationAction represents an automation action
+type AutomationAction struct {
 	Type        string                 `json:"type" yaml:"type"`
 	Target      string                 `json:"target,omitempty" yaml:"target,omitempty"`
 	Message     string                 `json:"message,omitempty" yaml:"message,omitempty"`

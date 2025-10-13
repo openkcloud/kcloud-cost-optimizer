@@ -13,11 +13,11 @@ import (
 type enforcementEngine struct {
 	executors map[string]ActionExecutor
 	mu        sync.RWMutex
-	logger    *types.Logger
+	logger    types.Logger
 }
 
 // NewEnforcementEngine creates a new enforcement engine
-func NewEnforcementEngine(logger *types.Logger) EnforcementEngine {
+func NewEnforcementEngine(logger types.Logger) EnforcementEngine {
 	return &enforcementEngine{
 		executors: make(map[string]ActionExecutor),
 		logger:    logger,

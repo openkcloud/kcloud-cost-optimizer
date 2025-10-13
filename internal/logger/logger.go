@@ -118,6 +118,11 @@ func (l *Logger) WithCluster(clusterID, clusterName string) *Logger {
 	)}
 }
 
+// WithEvaluation creates a new logger with evaluation information
+func (l *Logger) WithEvaluation(evaluationID string) *Logger {
+	return &Logger{l.Logger.With(zap.String("evaluation_id", evaluationID))}
+}
+
 // WithDuration creates a new logger with duration field
 func (l *Logger) WithDuration(duration time.Duration) *Logger {
 	return &Logger{l.Logger.With(zap.Duration("duration", duration))}
@@ -168,6 +173,38 @@ func SetGlobalLogger(logger *Logger) {
 	globalLogger = logger
 }
 
+// Logging methods that delegate to the underlying zap logger
+
+// Info logs an info message
+func (l *Logger) Info(msg string, fields ...zap.Field) {
+	l.Logger.Info(msg, fields...)
+}
+
+// Warn logs a warning message
+func (l *Logger) Warn(msg string, fields ...zap.Field) {
+	l.Logger.Warn(msg, fields...)
+}
+
+// Error logs an error message
+func (l *Logger) Error(msg string, fields ...zap.Field) {
+	l.Logger.Error(msg, fields...)
+}
+
+// Debug logs a debug message
+func (l *Logger) Debug(msg string, fields ...zap.Field) {
+	l.Logger.Debug(msg, fields...)
+}
+
+// Fatal logs a fatal message and exits
+func (l *Logger) Fatal(msg string, fields ...zap.Field) {
+	l.Logger.Fatal(msg, fields...)
+}
+
+// Log logs a message at the specified level
+func (l *Logger) Log(level zapcore.Level, msg string, fields ...zap.Field) {
+	l.Logger.Log(level, msg, fields...)
+}
+
 // Helper functions for common logging patterns
 
 // LogPolicyEvaluation logs policy evaluation results
@@ -205,7 +242,7 @@ func LogAutomationRuleExecution(logger *Logger, ruleID string, action string, su
 	)
 }
 
-// LogAPIR request logs API requests
+// LogAPIRequest logs API requests
 func LogAPIRequest(logger *Logger, method, path string, statusCode int, duration time.Duration) {
 	level := zap.InfoLevel
 	if statusCode >= 400 {

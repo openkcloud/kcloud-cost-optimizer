@@ -14,11 +14,11 @@ type ruleExecutor struct {
 	conditionEvaluator ConditionEvaluator
 	actionExecutors    map[string]ActionExecutor
 	mu                 sync.RWMutex
-	logger             *types.Logger
+	logger             types.Logger
 }
 
 // NewRuleExecutor creates a new rule executor
-func NewRuleExecutor(conditionEvaluator ConditionEvaluator, logger *types.Logger) RuleExecutor {
+func NewRuleExecutor(conditionEvaluator ConditionEvaluator, logger types.Logger) RuleExecutor {
 	return &ruleExecutor{
 		conditionEvaluator: conditionEvaluator,
 		actionExecutors:    make(map[string]ActionExecutor),
@@ -55,7 +55,7 @@ func (re *ruleExecutor) RegisterActionExecutor(executor ActionExecutor) {
 }
 
 // ExecuteRule executes an automation rule
-func (re *ruleExecutor) ExecuteRule(ctx context.Context, rule *AutomationRule, context map[string]interface{}) (*ExecutionResult, error) {
+func (re *ruleExecutor) ExecuteRule(ctx context.Context, rule *AutomationRule, contextData map[string]interface{}) (*ExecutionResult, error) {
 	startTime := time.Now()
 
 	re.logger.Info("executing automation rule", "rule_id", rule.ID, "rule_name", rule.Name)
@@ -71,7 +71,7 @@ func (re *ruleExecutor) ExecuteRule(ctx context.Context, rule *AutomationRule, c
 	}
 
 	// Evaluate conditions
-	conditionsMet, err := re.conditionEvaluator.EvaluateConditions(ctx, rule.Conditions, context)
+	conditionsMet, err := re.conditionEvaluator.EvaluateConditions(ctx, rule.Conditions, contextData)
 	if err != nil {
 		result.Error = fmt.Sprintf("condition evaluation failed: %v", err)
 		result.Duration = time.Since(startTime)
@@ -93,7 +93,7 @@ func (re *ruleExecutor) ExecuteRule(ctx context.Context, rule *AutomationRule, c
 	for i, action := range rule.Actions {
 		re.logger.Debug("executing action", "rule_id", rule.ID, "action_index", i, "action_type", action.Type)
 
-		actionResult, err := re.executeAction(ctx, action, context)
+		actionResult, err := re.executeAction(ctx, action, contextData)
 		if err != nil {
 			re.logger.WithError(err).Error("action execution failed", "rule_id", rule.ID, "action_index", i)
 
@@ -209,7 +209,7 @@ func (re *ruleExecutor) Health(ctx context.Context) error {
 // Helper methods
 
 // executeAction executes a single action
-func (re *ruleExecutor) executeAction(ctx context.Context, action *Action, context map[string]interface{}) (*ActionResult, error) {
+func (re *ruleExecutor) executeAction(ctx context.Context, action *Action, contextData map[string]interface{}) (*ActionResult, error) {
 	startTime := time.Now()
 
 	re.mu.RLock()
@@ -236,14 +236,14 @@ func (re *ruleExecutor) executeAction(ctx context.Context, action *Action, conte
 
 	// Execute action with retry if configured
 	if action.Retry != nil {
-		return re.executeActionWithRetry(ctx, executor, action, context)
+		return re.executeActionWithRetry(ctx, executor, action, contextData)
 	}
 
 	return executor.ExecuteAction(ctx, action)
 }
 
 // executeActionWithRetry executes an action with retry logic
-func (re *ruleExecutor) executeActionWithRetry(ctx context.Context, executor ActionExecutor, action *Action, context map[string]interface{}) (*ActionResult, error) {
+func (re *ruleExecutor) executeActionWithRetry(ctx context.Context, executor ActionExecutor, action *Action, contextData map[string]interface{}) (*ActionResult, error) {
 	retryConfig := action.Retry
 	var lastResult *ActionResult
 	var lastErr error

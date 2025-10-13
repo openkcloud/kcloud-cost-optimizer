@@ -13,11 +13,11 @@ import (
 type scheduler struct {
 	scheduledRules map[string]*AutomationRule
 	mu             sync.RWMutex
-	logger         *types.Logger
+	logger         types.Logger
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(logger *types.Logger) Scheduler {
+func NewScheduler(logger types.Logger) Scheduler {
 	return &scheduler{
 		scheduledRules: make(map[string]*AutomationRule),
 		logger:         logger,

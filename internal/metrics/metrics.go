@@ -58,13 +58,17 @@ type Metrics struct {
 	SystemCPUUsage    prometheus.Gauge
 	SystemGoroutines  prometheus.Gauge
 
-	logger *types.Logger
+	// Cached values for GetMetrics
+	cachedMetrics map[string]float64
+
+	logger types.Logger
 }
 
 // NewMetrics creates a new metrics instance
-func NewMetrics(logger *types.Logger) *Metrics {
+func NewMetrics(logger types.Logger) *Metrics {
 	return &Metrics{
-		logger: logger,
+		logger:        logger,
+		cachedMetrics: make(map[string]float64),
 	}
 }
 
@@ -390,6 +394,11 @@ func (m *Metrics) UpdatePolicyCounts(total, active, inactive int) {
 	m.PolicyTotal.Set(float64(total))
 	m.PolicyActive.Set(float64(active))
 	m.PolicyInactive.Set(float64(inactive))
+
+	// Cache values
+	m.cachedMetrics["policies_total"] = float64(total)
+	m.cachedMetrics["policies_active"] = float64(active)
+	m.cachedMetrics["policies_inactive"] = float64(inactive)
 }
 
 // UpdateWorkloadCounts updates workload count metrics
@@ -399,12 +408,23 @@ func (m *Metrics) UpdateWorkloadCounts(total, running, stopped, pending, failed 
 	m.WorkloadStopped.Set(float64(stopped))
 	m.WorkloadPending.Set(float64(pending))
 	m.WorkloadFailed.Set(float64(failed))
+
+	// Cache values
+	m.cachedMetrics["workloads_total"] = float64(total)
+	m.cachedMetrics["workloads_running"] = float64(running)
+	m.cachedMetrics["workloads_stopped"] = float64(stopped)
+	m.cachedMetrics["workloads_pending"] = float64(pending)
+	m.cachedMetrics["workloads_failed"] = float64(failed)
 }
 
 // UpdateAutomationRuleCounts updates automation rule count metrics
 func (m *Metrics) UpdateAutomationRuleCounts(total, active int) {
 	m.AutomationRuleTotal.Set(float64(total))
 	m.AutomationRuleActive.Set(float64(active))
+
+	// Cache values
+	m.cachedMetrics["automation_rules_total"] = float64(total)
+	m.cachedMetrics["automation_rules_active"] = float64(active)
 }
 
 // UpdateSystemMetrics updates system metrics
@@ -413,27 +433,22 @@ func (m *Metrics) UpdateSystemMetrics(uptime time.Duration, memoryUsage, cpuUsag
 	m.SystemMemoryUsage.Set(memoryUsage)
 	m.SystemCPUUsage.Set(cpuUsage)
 	m.SystemGoroutines.Set(float64(goroutines))
+
+	// Cache values
+	m.cachedMetrics["system_uptime"] = uptime.Seconds()
+	m.cachedMetrics["system_memory_usage"] = memoryUsage
+	m.cachedMetrics["system_cpu_usage"] = cpuUsage
+	m.cachedMetrics["system_goroutines"] = float64(goroutines)
 }
 
 // GetMetrics returns current metrics as a map
 func (m *Metrics) GetMetrics(ctx context.Context) (map[string]interface{}, error) {
 	metrics := make(map[string]interface{})
 
-	// Collect gauge metrics
-	metrics["policies_total"] = m.PolicyTotal.Get()
-	metrics["policies_active"] = m.PolicyActive.Get()
-	metrics["policies_inactive"] = m.PolicyInactive.Get()
-	metrics["workloads_total"] = m.WorkloadTotal.Get()
-	metrics["workloads_running"] = m.WorkloadRunning.Get()
-	metrics["workloads_stopped"] = m.WorkloadStopped.Get()
-	metrics["workloads_pending"] = m.WorkloadPending.Get()
-	metrics["workloads_failed"] = m.WorkloadFailed.Get()
-	metrics["automation_rules_total"] = m.AutomationRuleTotal.Get()
-	metrics["automation_rules_active"] = m.AutomationRuleActive.Get()
-	metrics["system_uptime"] = m.SystemUptime.Get()
-	metrics["system_memory_usage"] = m.SystemMemoryUsage.Get()
-	metrics["system_cpu_usage"] = m.SystemCPUUsage.Get()
-	metrics["system_goroutines"] = m.SystemGoroutines.Get()
+	// Return cached gauge metrics
+	for key, value := range m.cachedMetrics {
+		metrics[key] = value
+	}
 
 	return metrics, nil
 }

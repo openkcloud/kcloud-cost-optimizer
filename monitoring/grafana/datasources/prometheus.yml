@@ -12,3 +12,5 @@ datasources:
       queryTimeout: "60s"
       httpMethod: "POST"
     secureJsonData: {}
+
+

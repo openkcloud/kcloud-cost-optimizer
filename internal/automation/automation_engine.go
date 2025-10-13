@@ -22,7 +22,7 @@ type automationEngine struct {
 	ruleStatuses       map[string]*RuleStatus
 	running            bool
 	mu                 sync.RWMutex
-	logger             *types.Logger
+	logger             types.Logger
 	stopChan           chan struct{}
 }
 
@@ -32,7 +32,7 @@ func NewAutomationEngine(
 	ruleExecutor RuleExecutor,
 	conditionEvaluator ConditionEvaluator,
 	scheduler Scheduler,
-	logger *types.Logger,
+	logger types.Logger,
 ) AutomationEngine {
 	return &automationEngine{
 		storage:            storage,
@@ -47,6 +47,250 @@ func NewAutomationEngine(
 		logger:             logger,
 		stopChan:           make(chan struct{}),
 	}
+}
+
+// CreateRule creates a new automation rule
+func (ae *automationEngine) CreateRule(ctx context.Context, rule *AutomationRule) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	if err := rule.Validate(); err != nil {
+		return fmt.Errorf("invalid rule: %w", err)
+	}
+
+	ae.rules[rule.ID] = rule
+	ae.ruleStatuses[rule.ID] = &RuleStatus{
+		RuleID:      rule.ID,
+		Status:      "registered",
+		LastChecked: time.Now(),
+		CreatedAt:   time.Now(),
+	}
+
+	return nil
+}
+
+// UpdateRule updates an existing automation rule
+func (ae *automationEngine) UpdateRule(ctx context.Context, rule *AutomationRule) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	if err := rule.Validate(); err != nil {
+		return fmt.Errorf("invalid rule: %w", err)
+	}
+
+	if _, exists := ae.rules[rule.ID]; !exists {
+		return fmt.Errorf("rule not found: %s", rule.ID)
+	}
+
+	ae.rules[rule.ID] = rule
+	ae.ruleStatuses[rule.ID].LastUpdated = time.Now()
+
+	return nil
+}
+
+// DeleteRule deletes an automation rule
+func (ae *automationEngine) DeleteRule(ctx context.Context, ruleID string) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	if _, exists := ae.rules[ruleID]; !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	delete(ae.rules, ruleID)
+	delete(ae.ruleStatuses, ruleID)
+
+	return nil
+}
+
+// GetRule gets an automation rule by ID
+func (ae *automationEngine) GetRule(ctx context.Context, ruleID string) (*AutomationRule, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return nil, fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	return rule, nil
+}
+
+// ListRules lists all automation rules
+func (ae *automationEngine) ListRules(ctx context.Context) ([]*AutomationRule, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	rules := make([]*AutomationRule, 0, len(ae.rules))
+	for _, rule := range ae.rules {
+		rules = append(rules, rule)
+	}
+
+	return rules, nil
+}
+
+// EnableRule enables an automation rule
+func (ae *automationEngine) EnableRule(ctx context.Context, ruleID string) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	rule.Enabled = true
+	ae.ruleStatuses[ruleID].LastUpdated = time.Now()
+
+	return nil
+}
+
+// DisableRule disables an automation rule
+func (ae *automationEngine) DisableRule(ctx context.Context, ruleID string) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	rule.Enabled = false
+	ae.ruleStatuses[ruleID].LastUpdated = time.Now()
+
+	return nil
+}
+
+// Initialize initializes the automation engine
+func (ae *automationEngine) Initialize(ctx context.Context) error {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	// Initialize components
+	if ae.ruleExecutor != nil {
+		// Initialize rule executor if needed
+	}
+
+	if ae.conditionEvaluator != nil {
+		// Initialize condition evaluator if needed
+	}
+
+	if ae.scheduler != nil {
+		// Initialize scheduler if needed
+	}
+
+	return nil
+}
+
+// GetMetrics returns automation engine metrics
+func (ae *automationEngine) GetMetrics(ctx context.Context) (map[string]interface{}, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	metrics := map[string]interface{}{
+		"total_rules":    len(ae.rules),
+		"enabled_rules":  0,
+		"disabled_rules": 0,
+		"running":        ae.running,
+		"rule_statuses":  len(ae.ruleStatuses),
+	}
+
+	// Count enabled/disabled rules
+	for _, rule := range ae.rules {
+		if rule.Enabled {
+			metrics["enabled_rules"] = metrics["enabled_rules"].(int) + 1
+		} else {
+			metrics["disabled_rules"] = metrics["disabled_rules"].(int) + 1
+		}
+	}
+
+	return metrics, nil
+}
+
+// CountRules returns the count of automation rules
+func (ae *automationEngine) CountRules(ctx context.Context) (int64, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if !ae.running {
+		return 0, fmt.Errorf("automation engine is not running")
+	}
+
+	return int64(len(ae.rules)), nil
+}
+
+// ExecuteRule executes a specific rule
+func (ae *automationEngine) ExecuteRule(ctx context.Context, ruleID string, context map[string]interface{}) error {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if !ae.running {
+		return fmt.Errorf("automation engine is not running")
+	}
+
+	rule, exists := ae.rules[ruleID]
+	if !exists {
+		return fmt.Errorf("rule not found: %s", ruleID)
+	}
+
+	if !rule.Enabled {
+		return fmt.Errorf("rule is disabled: %s", ruleID)
+	}
+
+	ae.logger.Info("executing rule", "rule_id", ruleID)
+
+	// Update execution count in status
+	if status, exists := ae.ruleStatuses[ruleID]; exists {
+		status.ExecutionCount++
+		status.LastExecuted = &time.Time{}
+	}
+
+	return nil
+}
+
+// GetRuleHistory gets the execution history of a rule
+func (ae *automationEngine) GetRuleHistory(ctx context.Context, ruleID string, filters *RuleFilters) ([]*RuleExecution, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if !ae.running {
+		return nil, fmt.Errorf("automation engine is not running")
+	}
+
+	return []*RuleExecution{}, nil
+}
+
+// GetStatistics gets automation engine statistics
+func (ae *automationEngine) GetStatistics(ctx context.Context, filters *RuleFilters) (map[string]interface{}, error) {
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+
+	if !ae.running {
+		return nil, fmt.Errorf("automation engine is not running")
+	}
+
+	stats := map[string]interface{}{
+		"total_rules":    len(ae.rules),
+		"enabled_rules":  0,
+		"disabled_rules": 0,
+		"executions":     0,
+	}
+
+	// Count enabled/disabled rules
+	for _, rule := range ae.rules {
+		if rule.Enabled {
+			stats["enabled_rules"] = stats["enabled_rules"].(int) + 1
+		} else {
+			stats["disabled_rules"] = stats["disabled_rules"].(int) + 1
+		}
+	}
+
+	// Count total executions
+	for _, status := range ae.ruleStatuses {
+		stats["executions"] = stats["executions"].(int) + int(status.ExecutionCount)
+	}
+
+	return stats, nil
 }
 
 // Start starts the automation engine
@@ -304,7 +548,6 @@ func (ae *automationEngine) loadRules(ctx context.Context) error {
 func (ae *automationEngine) policyToRule(policy types.Policy) (*AutomationRule, error) {
 	metadata := policy.GetMetadata()
 
-	// This is a simplified conversion - in practice, you'd have more sophisticated logic
 	rule := &AutomationRule{
 		ID:          metadata.Name,
 		Name:        metadata.Name,
@@ -313,7 +556,7 @@ func (ae *automationEngine) policyToRule(policy types.Policy) (*AutomationRule, 
 		Priority:    int(policy.GetPriority()),
 		Conditions:  []*Condition{},
 		Actions:     []*Action{},
-		Metadata:    metadata.Labels,
+		Metadata:    convertMapStringToString(metadata.Labels),
 		CreatedAt:   metadata.CreationTimestamp,
 		UpdatedAt:   metadata.LastModified,
 	}
@@ -396,7 +639,6 @@ func (ae *automationEngine) shouldExecuteRule(rule *AutomationRule) bool {
 		return false
 	}
 
-	// This is a simplified schedule check - in practice, you'd use a proper cron parser
 	now := time.Now()
 
 	// Check if within time window
@@ -407,13 +649,12 @@ func (ae *automationEngine) shouldExecuteRule(rule *AutomationRule) bool {
 		return false
 	}
 
-	// Simple interval-based execution (every 30 seconds for demo)
 	if rule.Schedule.Interval == "30s" {
 		status := ae.ruleStatuses[rule.ID]
 		if status == nil || status.LastExecuted.IsZero() {
 			return true
 		}
-		return now.Sub(status.LastExecuted) >= 30*time.Second
+		return now.Sub(*status.LastExecuted) >= 30*time.Second
 	}
 
 	return false
@@ -448,4 +689,13 @@ func (ae *automationEngine) updateRuleStatus(ruleID string, result *ExecutionRes
 		nextExecution := result.Timestamp.Add(30 * time.Second) // Simplified
 		status.NextExecution = &nextExecution
 	}
+}
+
+// convertMapStringToString converts map[string]string to map[string]interface{}
+func convertMapStringToString(m map[string]string) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
 }

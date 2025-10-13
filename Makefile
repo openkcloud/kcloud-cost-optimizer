@@ -59,20 +59,32 @@ build: clean ## Build the application binary
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PACKAGE)
 	@echo "Build completed: $(BUILD_DIR)/$(BINARY_NAME)"
 
+.PHONY: build-cli
+build-cli: clean ## Build the CLI binary
+	@echo "Building CLI binary..."
+	@mkdir -p $(BUILD_DIR)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli ./cmd/policy-cli/main.go
+	@echo "CLI build completed: $(BUILD_DIR)/policy-cli"
+
 .PHONY: build-all
 build-all: clean ## Build binaries for all platforms
 	@echo "Building $(APP_NAME) for all platforms..."
 	@mkdir -p $(BUILD_DIR)
 	@echo "Building for Linux AMD64..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-amd64 ./cmd/policy-cli/main.go
 	@echo "Building for Linux ARM64..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-linux-arm64 ./cmd/policy-cli/main.go
 	@echo "Building for macOS AMD64..."
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-amd64 ./cmd/policy-cli/main.go
 	@echo "Building for macOS ARM64..."
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-darwin-arm64 ./cmd/policy-cli/main.go
 	@echo "Building for Windows AMD64..."
 	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PACKAGE)
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) $(BUILD_FLAGS) $(BUILD_DIR)/policy-cli-windows-amd64.exe ./cmd/policy-cli/main.go
 	@echo "Build completed for all platforms"
 
 .PHONY: install
@@ -80,6 +92,12 @@ install: build ## Install the binary to GOPATH/bin
 	@echo "Installing $(APP_NAME)..."
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(GOPATH)/bin/
 	@echo "Installed to $(GOPATH)/bin/$(BINARY_NAME)"
+
+.PHONY: install-cli
+install-cli: build-cli ## Install the CLI binary to GOPATH/bin
+	@echo "Installing CLI..."
+	@cp $(BUILD_DIR)/policy-cli $(GOPATH)/bin/
+	@echo "CLI installed to $(GOPATH)/bin/policy-cli"
 
 # Test targets
 .PHONY: test
@@ -175,19 +193,61 @@ docker-push: docker-build ## Push Docker image to registry
 
 # Kubernetes targets
 .PHONY: k8s-deploy
-k8s-deploy: ## Deploy to Kubernetes
+k8s-deploy: ## Deploy to Kubernetes using deployment script
 	@echo "Deploying to Kubernetes..."
+	@./scripts/deploy-k8s.sh deploy
+
+.PHONY: k8s-deploy-manual
+k8s-deploy-manual: ## Deploy to Kubernetes manually
+	@echo "Deploying to Kubernetes manually..."
 	@kubectl apply -f k8s/
 
+.PHONY: k8s-deploy-kustomize
+k8s-deploy-kustomize: ## Deploy to Kubernetes using Kustomize
+	@echo "Deploying to Kubernetes using Kustomize..."
+	@kustomize build k8s/ | kubectl apply -f -
+
 .PHONY: k8s-delete
-k8s-delete: ## Delete from Kubernetes
+k8s-delete: ## Delete from Kubernetes using deployment script
 	@echo "Deleting from Kubernetes..."
+	@./scripts/deploy-k8s.sh cleanup
+
+.PHONY: k8s-delete-manual
+k8s-delete-manual: ## Delete from Kubernetes manually
+	@echo "Deleting from Kubernetes manually..."
 	@kubectl delete -f k8s/
+
+.PHONY: k8s-status
+k8s-status: ## Show Kubernetes deployment status
+	@echo "Showing Kubernetes deployment status..."
+	@./scripts/deploy-k8s.sh status
 
 .PHONY: k8s-logs
 k8s-logs: ## Show Kubernetes logs
 	@echo "Showing Kubernetes logs..."
-	@kubectl logs -f deployment/$(APP_NAME)
+	@kubectl logs -f deployment/$(APP_NAME) -n policy-engine
+
+.PHONY: k8s-port-forward
+k8s-port-forward: ## Port forward to Policy Engine service
+	@echo "Port forwarding to Policy Engine service..."
+	@kubectl port-forward svc/policy-engine-service 8080:8080 -n policy-engine
+
+.PHONY: k8s-port-forward-metrics
+k8s-port-forward-metrics: ## Port forward to Policy Engine metrics
+	@echo "Port forwarding to Policy Engine metrics..."
+	@kubectl port-forward svc/policy-engine-service 9090:9090 -n policy-engine
+
+.PHONY: k8s-describe
+k8s-describe: ## Describe Kubernetes resources
+	@echo "Describing Kubernetes resources..."
+	@kubectl describe deployment $(APP_NAME) -n policy-engine
+	@kubectl describe svc policy-engine-service -n policy-engine
+	@kubectl describe ingress policy-engine-ingress -n policy-engine
+
+.PHONY: k8s-get-all
+k8s-get-all: ## Get all Kubernetes resources
+	@echo "Getting all Kubernetes resources..."
+	@kubectl get all -n policy-engine
 
 # Utility targets
 .PHONY: clean
@@ -267,6 +327,53 @@ load-policies: ## Load example policies
 list-policies: ## List all policies
 	@echo "Listing all policies..."
 	@curl -s http://localhost:8005/api/v1/policies | jq '.' || echo "Failed to list policies"
+
+# CLI targets
+.PHONY: cli-test
+cli-test: build-cli ## Test CLI functionality
+	@echo "Testing CLI functionality..."
+	@$(BUILD_DIR)/policy-cli --help
+	@$(BUILD_DIR)/policy-cli policy --help
+	@$(BUILD_DIR)/policy-cli workload --help
+	@$(BUILD_DIR)/policy-cli evaluate --help
+	@$(BUILD_DIR)/policy-cli automation --help
+	@$(BUILD_DIR)/policy-cli status --help
+	@echo "CLI test completed"
+
+.PHONY: cli-demo
+cli-demo: build-cli ## Run CLI demo
+	@echo "Running CLI demo..."
+	@echo "1. Creating policy..."
+	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 policy create examples/policies/cost-optimization-policy.yaml || echo "Policy creation failed (server may not be running)"
+	@echo "2. Creating workload..."
+	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 workload create examples/workloads/sample-workload.yaml || echo "Workload creation failed (server may not be running)"
+	@echo "3. Evaluating workload..."
+	@$(BUILD_DIR)/policy-cli --server-host=localhost --server-port=8080 evaluate workload sample-workload || echo "Evaluation failed (server may not be running)"
+	@echo "CLI demo completed"
+
+# Integration test targets
+.PHONY: test-integration
+test-integration: build build-cli ## Run integration tests
+	@echo "Running integration tests..."
+	@go test -v -timeout 30m ./tests/...
+
+.PHONY: test-cli-integration
+test-cli-integration: build-cli ## Run CLI integration tests
+	@echo "Running CLI integration tests..."
+	@go test -v -timeout 30m ./tests/cli_integration_test.go
+
+.PHONY: test-system-validation
+test-system-validation: ## Run comprehensive system validation
+	@echo "Running comprehensive system validation..."
+	@./scripts/system-validation.sh
+
+.PHONY: test-all
+test-all: test test-integration test-cli-integration ## Run all tests (unit, integration, CLI)
+	@echo "All tests completed successfully"
+
+.PHONY: validate-system
+validate-system: test-all ## Validate entire system (alias for test-all)
+	@echo "System validation completed successfully"
 
 # Version information
 .PHONY: version

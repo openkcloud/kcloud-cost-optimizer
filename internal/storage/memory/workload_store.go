@@ -40,7 +40,7 @@ func (s *memoryWorkloadStore) Create(ctx context.Context, workload *types.Worklo
 	workloadID := s.generateWorkloadID(workload)
 
 	// Check if workload with same name already exists
-	if existingID, exists := s.names[workload.Name]; exists {
+	if _, exists := s.names[workload.Name]; exists {
 		return types.NewWorkloadError(workloadID, workload.Name, string(workload.Type), "create", types.ErrWorkloadAlreadyExists)
 	}
 
@@ -492,7 +492,7 @@ func (s *memoryWorkloadStore) matchesFilters(workload *types.Workload, filters *
 	}
 
 	// Labels filter
-	if filters.Labels != nil && len(filters.Labels) > 0 {
+	if len(filters.Labels) > 0 {
 		for key, value := range filters.Labels {
 			if workload.Labels == nil || workload.Labels[key] != value {
 				return false
