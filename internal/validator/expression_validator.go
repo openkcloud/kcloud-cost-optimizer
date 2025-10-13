@@ -218,7 +218,6 @@ func (ev *ExpressionValidator) ValidateRule(rule *types.Rule) error {
 		return fmt.Errorf("rule condition validation failed: %w", err)
 	}
 
-	// Validate action (basic validation)
 	if err := ev.validateAction(rule.Action); err != nil {
 		return fmt.Errorf("rule action validation failed: %w", err)
 	}
@@ -252,49 +251,31 @@ func (ev *ExpressionValidator) validateAction(action string) error {
 	return fmt.Errorf("invalid action: %s", action)
 }
 
-// ValidateTrigger validates a trigger expression
-func (ev *ExpressionValidator) ValidateTrigger(trigger *types.Trigger) error {
-	if trigger == nil {
-		return fmt.Errorf("trigger cannot be nil")
-	}
-
-	if trigger.Type == "" {
-		return fmt.Errorf("trigger type cannot be empty")
+// ValidateTrigger validates a trigger string
+func (ev *ExpressionValidator) ValidateTrigger(trigger string) error {
+	if trigger == "" {
+		return fmt.Errorf("trigger cannot be empty")
 	}
 
 	// Validate trigger type
 	validTriggerTypes := []string{
 		"event-based", "time-based", "threshold-based",
-		"schedule-based", "condition-based",
+		"schedule-based", "condition-based", "metric-based",
+		"cpu-usage", "memory-usage", "workload-created",
+		"workload-updated", "workload-deleted", "policy-violation",
 	}
 
-	triggerTypeLower := strings.ToLower(trigger.Type)
+	triggerLower := strings.ToLower(trigger)
 	valid := false
 	for _, validType := range validTriggerTypes {
-		if triggerTypeLower == validType {
+		if strings.Contains(triggerLower, validType) {
 			valid = true
 			break
 		}
 	}
 
 	if !valid {
-		return fmt.Errorf("invalid trigger type: %s", trigger.Type)
-	}
-
-	// Validate trigger-specific fields
-	switch trigger.Type {
-	case "event-based":
-		if len(trigger.Events) == 0 {
-			return fmt.Errorf("event-based trigger must have at least one event")
-		}
-	case "time-based":
-		if trigger.Schedule == "" {
-			return fmt.Errorf("time-based trigger must have a schedule")
-		}
-	case "threshold-based":
-		if len(trigger.Metrics) == 0 {
-			return fmt.Errorf("threshold-based trigger must have at least one metric")
-		}
+		return fmt.Errorf("invalid trigger type: %s", trigger)
 	}
 
 	return nil
@@ -306,52 +287,30 @@ func (ev *ExpressionValidator) ValidateAutomationRule(rule *types.AutomationRule
 		return fmt.Errorf("automation rule cannot be nil")
 	}
 
-	if rule.ID == "" {
-		return fmt.Errorf("automation rule ID cannot be empty")
+	// Validate trigger
+	if rule.Trigger == "" {
+		return fmt.Errorf("automation rule trigger cannot be empty")
 	}
 
-	if rule.Name == "" {
-		return fmt.Errorf("automation rule name cannot be empty")
+	if err := ev.ValidateTrigger(rule.Trigger); err != nil {
+		return fmt.Errorf("trigger validation failed: %w", err)
 	}
 
-	if rule.Type == "" {
-		return fmt.Errorf("automation rule type cannot be empty")
+	// Validate action
+	if rule.Action == "" {
+		return fmt.Errorf("automation rule action cannot be empty")
 	}
 
-	if rule.Status == "" {
-		return fmt.Errorf("automation rule status cannot be empty")
+	if err := ev.validateAction(rule.Action); err != nil {
+		return fmt.Errorf("action validation failed: %w", err)
 	}
 
-	// Validate triggers
-	if len(rule.Triggers) == 0 {
-		return fmt.Errorf("automation rule must have at least one trigger")
-	}
-
-	for i, trigger := range rule.Triggers {
-		if err := ev.ValidateTrigger(&trigger); err != nil {
-			return fmt.Errorf("trigger %d validation failed: %w", i, err)
-		}
-	}
-
-	// Validate conditions
-	if len(rule.Conditions) == 0 {
-		return fmt.Errorf("automation rule must have at least one condition")
-	}
-
-	for i, condition := range rule.Conditions {
-		if err := ev.ValidateCondition(condition.Expression); err != nil {
-			return fmt.Errorf("condition %d validation failed: %w", i, err)
-		}
-	}
-
-	// Validate actions
-	if len(rule.Actions) == 0 {
-		return fmt.Errorf("automation rule must have at least one action")
-	}
-
-	for i, action := range rule.Actions {
-		if err := ev.validateAction(action.Name); err != nil {
-			return fmt.Errorf("action %d validation failed: %w", i, err)
+	// Validate conditions if present
+	if len(rule.Conditions) > 0 {
+		for i, condition := range rule.Conditions {
+			if err := ev.ValidateCondition(condition); err != nil {
+				return fmt.Errorf("condition %d validation failed: %w", i, err)
+			}
 		}
 	}
 

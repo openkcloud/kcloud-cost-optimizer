@@ -148,15 +148,15 @@ type CostOptimizationPolicy struct {
 
 // CostOptimizationSpec defines cost optimization policy specification
 type CostOptimizationSpec struct {
-	Priority         Priority         `json:"priority" yaml:"priority"`
-	Objectives       []Objective      `json:"objectives" yaml:"objectives"`
-	Constraints      Constraints      `json:"constraints" yaml:"constraints"`
-	WorkloadPolicies []WorkloadPolicy `json:"workloadPolicies" yaml:"workloadPolicies"`
-	Automation       []AutomationRule `json:"automation,omitempty" yaml:"automation,omitempty"`
+	Priority         Priority                `json:"priority" yaml:"priority"`
+	Objectives       []OptimizationObjective `json:"objectives" yaml:"objectives"`
+	Constraints      Constraints             `json:"constraints" yaml:"constraints"`
+	WorkloadPolicies []WorkloadPolicy        `json:"workloadPolicies" yaml:"workloadPolicies"`
+	Automation       []AutomationRule        `json:"automation,omitempty" yaml:"automation,omitempty"`
 }
 
-// Objective represents an optimization objective
-type Objective struct {
+// OptimizationObjective represents a cost optimization objective
+type OptimizationObjective struct {
 	Type   string  `json:"type" yaml:"type"`
 	Weight float64 `json:"weight" yaml:"weight"`
 	Target *string `json:"target,omitempty" yaml:"target,omitempty"`

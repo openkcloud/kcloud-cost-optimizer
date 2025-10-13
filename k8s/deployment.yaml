@@ -86,3 +86,5 @@ spec:
         emptyDir: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
+
+

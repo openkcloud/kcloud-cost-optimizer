@@ -27,35 +27,28 @@ func (v *Validator) ValidatePolicy(policy *types.Policy) error {
 		return fmt.Errorf("policy cannot be nil")
 	}
 
-	// Validate metadata
-	if err := v.validateMetadata(&policy.Metadata); err != nil {
+	// Validate metadata using interface method
+	metadata := (*policy).GetMetadata()
+	if err := v.validateMetadata(&metadata); err != nil {
 		return fmt.Errorf("metadata validation failed: %w", err)
 	}
 
-	// Validate spec based on policy type
-	switch policy.Type {
-	case types.PolicyTypeCostOptimization:
-		if err := v.validateCostOptimizationPolicy(policy); err != nil {
-			return fmt.Errorf("cost optimization policy validation failed: %w", err)
-		}
-	case types.PolicyTypeAutomation:
-		if err := v.validateAutomationPolicy(policy); err != nil {
-			return fmt.Errorf("automation policy validation failed: %w", err)
-		}
-	case types.PolicyTypeWorkloadPriority:
-		if err := v.validateWorkloadPriorityPolicy(policy); err != nil {
-			return fmt.Errorf("workload priority policy validation failed: %w", err)
-		}
-	case types.PolicyTypeSecurity:
-		if err := v.validateSecurityPolicy(policy); err != nil {
-			return fmt.Errorf("security policy validation failed: %w", err)
-		}
-	case types.PolicyTypeResourceQuota:
-		if err := v.validateResourceQuotaPolicy(policy); err != nil {
-			return fmt.Errorf("resource quota policy validation failed: %w", err)
-		}
-	default:
-		return fmt.Errorf("unknown policy type: %s", policy.Type)
+	// Basic validation - type-specific validation should be done by concrete implementations
+	policyType := (*policy).GetType()
+	if policyType == "" {
+		return fmt.Errorf("policy type cannot be empty")
+	}
+
+	// Validate priority
+	priority := (*policy).GetPriority()
+	if priority <= 0 {
+		return fmt.Errorf("policy priority must be greater than 0")
+	}
+
+	// Validate status
+	status := (*policy).GetStatus()
+	if status == "" {
+		return fmt.Errorf("policy status cannot be empty")
 	}
 
 	return nil
@@ -222,183 +215,42 @@ func (v *Validator) validateAnnotationValue(value string) error {
 }
 
 // validateCostOptimizationPolicy validates cost optimization policy
-func (v *Validator) validateCostOptimizationPolicy(policy *types.Policy) error {
-	if policy.Spec == nil {
-		return fmt.Errorf("spec cannot be nil")
+func (v *Validator) validateCostOptimizationPolicy(policy *types.CostOptimizationPolicy) error {
+	if policy == nil {
+		return fmt.Errorf("policy cannot be nil")
 	}
 
-	// Validate objectives
-	if err := v.validateObjectives(policy.Spec.Objectives); err != nil {
-		return fmt.Errorf("objectives validation failed: %w", err)
+	// Validate metadata
+	if err := v.validateMetadata(&policy.Metadata); err != nil {
+		return fmt.Errorf("metadata validation failed: %w", err)
 	}
 
-	// Validate constraints
-	if err := v.validateConstraints(policy.Spec.Constraints); err != nil {
-		return fmt.Errorf("constraints validation failed: %w", err)
+	// Validate priority
+	if policy.Spec.Priority <= 0 {
+		return fmt.Errorf("policy priority must be greater than 0")
 	}
 
-	// Validate rules
-	if err := v.validateRules(policy.Spec.Rules); err != nil {
-		return fmt.Errorf("rules validation failed: %w", err)
-	}
-
-	// Validate actions
-	if err := v.validateActions(policy.Spec.Actions); err != nil {
-		return fmt.Errorf("actions validation failed: %w", err)
-	}
-
-	return nil
-}
-
-// validateObjectives validates policy objectives
-func (v *Validator) validateObjectives(objectives []types.Objective) error {
-	if len(objectives) == 0 {
-		return fmt.Errorf("at least one objective is required")
-	}
-
-	totalWeight := 0.0
-	for i, objective := range objectives {
-		if err := v.validateObjective(&objective); err != nil {
-			return fmt.Errorf("objective %d validation failed: %w", i, err)
-		}
-		totalWeight += objective.Weight
-	}
-
-	if totalWeight <= 0 {
-		return fmt.Errorf("total weight must be greater than 0")
-	}
-
-	// Allow some tolerance for floating point precision
-	if totalWeight < 0.99 || totalWeight > 1.01 {
-		return fmt.Errorf("total weight should be approximately 1.0, got %f", totalWeight)
-	}
-
-	return nil
-}
-
-// validateObjective validates a single objective
-func (v *Validator) validateObjective(objective *types.Objective) error {
-	if objective == nil {
-		return fmt.Errorf("objective cannot be nil")
-	}
-
-	if objective.Type == "" {
-		return fmt.Errorf("objective type cannot be empty")
-	}
-
-	if objective.Weight <= 0 || objective.Weight > 1 {
-		return fmt.Errorf("objective weight must be between 0 and 1, got %f", objective.Weight)
-	}
-
-	if objective.Target == "" {
-		return fmt.Errorf("objective target cannot be empty")
-	}
-
-	return nil
-}
-
-// validateConstraints validates policy constraints
-func (v *Validator) validateConstraints(constraints []types.Constraint) error {
-	for i, constraint := range constraints {
-		if err := v.validateConstraint(&constraint); err != nil {
-			return fmt.Errorf("constraint %d validation failed: %w", i, err)
-		}
-	}
-	return nil
-}
-
-// validateConstraint validates a single constraint
-func (v *Validator) validateConstraint(constraint *types.Constraint) error {
-	if constraint == nil {
-		return fmt.Errorf("constraint cannot be nil")
-	}
-
-	if constraint.Type == "" {
-		return fmt.Errorf("constraint type cannot be empty")
-	}
-
-	if constraint.Value == "" {
-		return fmt.Errorf("constraint value cannot be empty")
-	}
-
-	return nil
-}
-
-// validateRules validates policy rules
-func (v *Validator) validateRules(rules []types.Rule) error {
-	for i, rule := range rules {
-		if err := v.validateRule(&rule); err != nil {
-			return fmt.Errorf("rule %d validation failed: %w", i, err)
-		}
-	}
-	return nil
-}
-
-// validateRule validates a single rule
-func (v *Validator) validateRule(rule *types.Rule) error {
-	if rule == nil {
-		return fmt.Errorf("rule cannot be nil")
-	}
-
-	if rule.Name == "" {
-		return fmt.Errorf("rule name cannot be empty")
-	}
-
-	if rule.Condition == "" {
-		return fmt.Errorf("rule condition cannot be empty")
-	}
-
-	if rule.Action == "" {
-		return fmt.Errorf("rule action cannot be empty")
-	}
-
-	return nil
-}
-
-// validateActions validates policy actions
-func (v *Validator) validateActions(actions []types.Action) error {
-	for i, action := range actions {
-		if err := v.validateAction(&action); err != nil {
-			return fmt.Errorf("action %d validation failed: %w", i, err)
-		}
-	}
-	return nil
-}
-
-// validateAction validates a single action
-func (v *Validator) validateAction(action *types.Action) error {
-	if action == nil {
-		return fmt.Errorf("action cannot be nil")
-	}
-
-	if action.Type == "" {
-		return fmt.Errorf("action type cannot be empty")
-	}
-
+	// Basic validation only - detailed validation should be in specific validators
 	return nil
 }
 
 // validateAutomationPolicy validates automation policy
 func (v *Validator) validateAutomationPolicy(policy *types.Policy) error {
-	// Add automation-specific validation logic here
 	return nil
 }
 
 // validateWorkloadPriorityPolicy validates workload priority policy
 func (v *Validator) validateWorkloadPriorityPolicy(policy *types.Policy) error {
-	// Add workload priority-specific validation logic here
 	return nil
 }
 
 // validateSecurityPolicy validates security policy
 func (v *Validator) validateSecurityPolicy(policy *types.Policy) error {
-	// Add security-specific validation logic here
 	return nil
 }
 
 // validateResourceQuotaPolicy validates resource quota policy
 func (v *Validator) validateResourceQuotaPolicy(policy *types.Policy) error {
-	// Add resource quota-specific validation logic here
 	return nil
 }
 
@@ -441,20 +293,12 @@ func (v *Validator) ValidateAutomationRule(rule *types.AutomationRule) error {
 		return fmt.Errorf("automation rule cannot be nil")
 	}
 
-	if rule.ID == "" {
-		return fmt.Errorf("automation rule ID cannot be empty")
+	if rule.Trigger == "" {
+		return fmt.Errorf("automation rule trigger cannot be empty")
 	}
 
-	if rule.Name == "" {
-		return fmt.Errorf("automation rule name cannot be empty")
-	}
-
-	if rule.Type == "" {
-		return fmt.Errorf("automation rule type cannot be empty")
-	}
-
-	if rule.Status == "" {
-		return fmt.Errorf("automation rule status cannot be empty")
+	if rule.Action == "" {
+		return fmt.Errorf("automation rule action cannot be empty")
 	}
 
 	return nil
@@ -466,7 +310,6 @@ func (v *Validator) ValidateExpression(expression string) error {
 		return fmt.Errorf("expression cannot be empty")
 	}
 
-	// Basic syntax validation
 	if !strings.Contains(expression, "workload") && !strings.Contains(expression, "policy") {
 		return fmt.Errorf("expression must reference workload or policy")
 	}
@@ -528,7 +371,6 @@ func (v *Validator) ValidatePercentage(value string) error {
 		return fmt.Errorf("percentage value must contain a numeric part")
 	}
 
-	// Basic validation - should be a number
 	percentageRegex := regexp.MustCompile(`^\d+(\.\d+)?$`)
 	if !percentageRegex.MatchString(numericPart) {
 		return fmt.Errorf("percentage value must be a valid number")

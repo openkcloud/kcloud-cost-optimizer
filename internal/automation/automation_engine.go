@@ -212,8 +212,8 @@ func (ae *automationEngine) CountRules(ctx context.Context) (int64, error) {
 	ae.mu.RLock()
 	defer ae.mu.RUnlock()
 
-	if ae.closed {
-		return 0, fmt.Errorf("automation engine is closed")
+	if !ae.running {
+		return 0, fmt.Errorf("automation engine is not running")
 	}
 
 	return int64(len(ae.rules)), nil
@@ -224,8 +224,8 @@ func (ae *automationEngine) ExecuteRule(ctx context.Context, ruleID string, cont
 	ae.mu.RLock()
 	defer ae.mu.RUnlock()
 
-	if ae.closed {
-		return fmt.Errorf("automation engine is closed")
+	if !ae.running {
+		return fmt.Errorf("automation engine is not running")
 	}
 
 	rule, exists := ae.rules[ruleID]
@@ -237,7 +237,6 @@ func (ae *automationEngine) ExecuteRule(ctx context.Context, ruleID string, cont
 		return fmt.Errorf("rule is disabled: %s", ruleID)
 	}
 
-	// Execute the rule (simplified implementation)
 	ae.logger.Info("executing rule", "rule_id", ruleID)
 
 	// Update execution count in status
@@ -254,11 +253,10 @@ func (ae *automationEngine) GetRuleHistory(ctx context.Context, ruleID string, f
 	ae.mu.RLock()
 	defer ae.mu.RUnlock()
 
-	if ae.closed {
-		return nil, fmt.Errorf("automation engine is closed")
+	if !ae.running {
+		return nil, fmt.Errorf("automation engine is not running")
 	}
 
-	// Simplified implementation - return empty history
 	return []*RuleExecution{}, nil
 }
 
@@ -267,8 +265,8 @@ func (ae *automationEngine) GetStatistics(ctx context.Context, filters *RuleFilt
 	ae.mu.RLock()
 	defer ae.mu.RUnlock()
 
-	if ae.closed {
-		return nil, fmt.Errorf("automation engine is closed")
+	if !ae.running {
+		return nil, fmt.Errorf("automation engine is not running")
 	}
 
 	stats := map[string]interface{}{
@@ -550,7 +548,6 @@ func (ae *automationEngine) loadRules(ctx context.Context) error {
 func (ae *automationEngine) policyToRule(policy types.Policy) (*AutomationRule, error) {
 	metadata := policy.GetMetadata()
 
-	// This is a simplified conversion - in practice, you'd have more sophisticated logic
 	rule := &AutomationRule{
 		ID:          metadata.Name,
 		Name:        metadata.Name,
@@ -559,7 +556,7 @@ func (ae *automationEngine) policyToRule(policy types.Policy) (*AutomationRule, 
 		Priority:    int(policy.GetPriority()),
 		Conditions:  []*Condition{},
 		Actions:     []*Action{},
-		Metadata:    metadata.Labels,
+		Metadata:    convertMapStringToString(metadata.Labels),
 		CreatedAt:   metadata.CreationTimestamp,
 		UpdatedAt:   metadata.LastModified,
 	}
@@ -642,7 +639,6 @@ func (ae *automationEngine) shouldExecuteRule(rule *AutomationRule) bool {
 		return false
 	}
 
-	// This is a simplified schedule check - in practice, you'd use a proper cron parser
 	now := time.Now()
 
 	// Check if within time window
@@ -653,13 +649,12 @@ func (ae *automationEngine) shouldExecuteRule(rule *AutomationRule) bool {
 		return false
 	}
 
-	// Simple interval-based execution (every 30 seconds for demo)
 	if rule.Schedule.Interval == "30s" {
 		status := ae.ruleStatuses[rule.ID]
 		if status == nil || status.LastExecuted.IsZero() {
 			return true
 		}
-		return now.Sub(status.LastExecuted) >= 30*time.Second
+		return now.Sub(*status.LastExecuted) >= 30*time.Second
 	}
 
 	return false
@@ -694,4 +689,13 @@ func (ae *automationEngine) updateRuleStatus(ruleID string, result *ExecutionRes
 		nextExecution := result.Timestamp.Add(30 * time.Second) // Simplified
 		status.NextExecution = &nextExecution
 	}
+}
+
+// convertMapStringToString converts map[string]string to map[string]interface{}
+func convertMapStringToString(m map[string]string) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
 }

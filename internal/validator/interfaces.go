@@ -64,8 +64,8 @@ type ExpressionValidatorInterface interface {
 	// ValidateRule validates a rule expression
 	ValidateRule(rule *types.Rule) error
 
-	// ValidateTrigger validates a trigger expression
-	ValidateTrigger(trigger *types.Trigger) error
+	// ValidateTrigger validates a trigger string
+	ValidateTrigger(trigger string) error
 
 	// ValidateAutomationRule validates an automation rule
 	ValidateAutomationRule(rule *types.AutomationRule) error

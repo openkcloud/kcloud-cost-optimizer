@@ -38,7 +38,7 @@ func (s *memoryPolicyStore) Create(ctx context.Context, policy types.Policy) err
 	policyID := s.generatePolicyID(policy)
 
 	// Check if policy with same name already exists
-	if existingID, exists := s.names[policy.GetMetadata().Name]; exists {
+	if _, exists := s.names[policy.GetMetadata().Name]; exists {
 		return types.NewPolicyError(policyID, policy.GetMetadata().Name, string(policy.GetType()), "create", types.ErrPolicyAlreadyExists)
 	}
 
@@ -464,7 +464,7 @@ func (s *memoryPolicyStore) matchesFilters(policy types.Policy, filters *storage
 	}
 
 	// Labels filter
-	if filters.Labels != nil && len(filters.Labels) > 0 {
+	if len(filters.Labels) > 0 {
 		policyLabels := policy.GetMetadata().Labels
 		for key, value := range filters.Labels {
 			if policyLabels == nil || policyLabels[key] != value {

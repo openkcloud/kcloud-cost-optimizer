@@ -327,8 +327,8 @@ const (
 	OperatorNotIn              = "not_in"
 )
 
-// Trigger represents a trigger for automation
-type Trigger struct {
+// AutomationTrigger represents a trigger for automation
+type AutomationTrigger struct {
 	Type       string                 `json:"type"`
 	Name       string                 `json:"name"`
 	Condition  string                 `json:"condition"`

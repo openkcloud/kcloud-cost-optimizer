@@ -160,11 +160,11 @@ func TestPolicyHandler_CreatePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:      "test-policy",
 				Type:      types.PolicyTypeCostOptimization,
@@ -172,8 +172,8 @@ func TestPolicyHandler_CreatePolicy(t *testing.T) {
 				Priority:  100,
 				Namespace: "default",
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -199,7 +199,7 @@ func TestPolicyHandler_CreatePolicy(t *testing.T) {
 
 	t.Run("invalid JSON", func(t *testing.T) {
 		mockStorage := &MockStorageManager{}
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create request with invalid JSON
@@ -224,18 +224,18 @@ func TestPolicyHandler_CreatePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:   "test-policy",
 				Type:   types.PolicyTypeCostOptimization,
 				Status: types.PolicyStatusActive,
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -269,11 +269,11 @@ func TestPolicyHandler_GetPolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := &types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:      "test-policy",
 				Type:      types.PolicyTypeCostOptimization,
@@ -281,8 +281,8 @@ func TestPolicyHandler_GetPolicy(t *testing.T) {
 				Priority:  100,
 				Namespace: "default",
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -311,7 +311,7 @@ func TestPolicyHandler_GetPolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		mockPolicyStore.On("Get", mock.Anything, "non-existent-policy").Return(nil, assert.AnError)
@@ -343,11 +343,11 @@ func TestPolicyHandler_UpdatePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:      "test-policy",
 				Type:      types.PolicyTypeCostOptimization,
@@ -355,8 +355,8 @@ func TestPolicyHandler_UpdatePolicy(t *testing.T) {
 				Priority:  200, // Updated priority
 				Namespace: "default",
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -387,18 +387,18 @@ func TestPolicyHandler_UpdatePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:   "test-policy",
 				Type:   types.PolicyTypeCostOptimization,
 				Status: types.PolicyStatusActive,
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -433,7 +433,7 @@ func TestPolicyHandler_DeletePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		mockPolicyStore.On("Delete", mock.Anything, "test-policy").Return(nil)
@@ -461,7 +461,7 @@ func TestPolicyHandler_DeletePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		mockPolicyStore.On("Delete", mock.Anything, "test-policy").Return(assert.AnError)
@@ -493,19 +493,19 @@ func TestPolicyHandler_ListPolicies(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policies
-		policies := []types.Policy{
+		policies := []*types.CostOptimizationPolicy{
 			{
 				Metadata: types.PolicyMetadata{
 					Name:   "policy-1",
 					Type:   types.PolicyTypeCostOptimization,
 					Status: types.PolicyStatusActive,
 				},
-				Spec: &types.PolicySpec{
-					Type: types.PolicyTypeCostOptimization,
+				Spec: types.CostOptimizationSpec{
+					Priority: 100,
 				},
 			},
 			{
@@ -514,8 +514,8 @@ func TestPolicyHandler_ListPolicies(t *testing.T) {
 					Type:   types.PolicyTypeAutomation,
 					Status: types.PolicyStatusActive,
 				},
-				Spec: &types.PolicySpec{
-					Type: types.PolicyTypeAutomation,
+				Spec: types.CostOptimizationSpec{
+					Priority: 200,
 				},
 			},
 		}
@@ -545,10 +545,10 @@ func TestPolicyHandler_ListPolicies(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
-		mockPolicyStore.On("List", mock.Anything, mock.Anything).Return([]types.Policy{}, assert.AnError)
+		mockPolicyStore.On("List", mock.Anything, mock.Anything).Return([]*types.CostOptimizationPolicy{}, assert.AnError)
 
 		// Create request
 		req, _ := http.NewRequest("GET", "/policies", nil)
@@ -576,18 +576,18 @@ func TestPolicyHandler_EnablePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := &types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:   "test-policy",
 				Type:   types.PolicyTypeCostOptimization,
 				Status: types.PolicyStatusInactive,
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -617,7 +617,7 @@ func TestPolicyHandler_EnablePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		mockPolicyStore.On("Get", mock.Anything, "non-existent-policy").Return(nil, assert.AnError)
@@ -649,18 +649,18 @@ func TestPolicyHandler_DisablePolicy(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policy
-		policy := &types.Policy{
+		policy := &types.CostOptimizationPolicy{
 			Metadata: types.PolicyMetadata{
 				Name:   "test-policy",
 				Type:   types.PolicyTypeCostOptimization,
 				Status: types.PolicyStatusActive,
 			},
-			Spec: &types.PolicySpec{
-				Type: types.PolicyTypeCostOptimization,
+			Spec: types.CostOptimizationSpec{
+				Priority: 100,
 			},
 		}
 
@@ -694,18 +694,18 @@ func TestPolicyHandler_SearchPolicies(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create test policies
-		policies := []types.Policy{
+		policies := []*types.CostOptimizationPolicy{
 			{
 				Metadata: types.PolicyMetadata{
 					Name: "cost-optimization-policy",
 					Type: types.PolicyTypeCostOptimization,
 				},
-				Spec: &types.PolicySpec{
-					Type: types.PolicyTypeCostOptimization,
+				Spec: types.CostOptimizationSpec{
+					Priority: 100,
 				},
 			},
 		}
@@ -730,7 +730,7 @@ func TestPolicyHandler_SearchPolicies(t *testing.T) {
 
 	t.Run("missing query parameter", func(t *testing.T) {
 		mockStorage := &MockStorageManager{}
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
 		// Create request without query parameter
@@ -754,10 +754,10 @@ func TestPolicyHandler_SearchPolicies(t *testing.T) {
 		mockPolicyStore := &MockPolicyStore{}
 		mockStorage.On("Policy").Return(mockPolicyStore)
 
-		logger := &types.Logger{}
+		var logger types.Logger = nil
 		handler := NewPolicyHandler(mockStorage, logger)
 
-		mockPolicyStore.On("Search", mock.Anything, mock.AnythingOfType("*storage.PolicySearchQuery")).Return([]types.Policy{}, assert.AnError)
+		mockPolicyStore.On("Search", mock.Anything, mock.AnythingOfType("*storage.PolicySearchQuery")).Return([]*types.CostOptimizationPolicy{}, assert.AnError)
 
 		// Create request
 		req, _ := http.NewRequest("GET", "/policies/search?q=test", nil)

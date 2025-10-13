@@ -95,7 +95,7 @@ func (l *Logger) WithRequestID(requestID string) *Logger {
 }
 
 // WithPolicy creates a new logger with policy information
-func (l *Logger) WithPolicy(policyID, policyName string) Logger {
+func (l *Logger) WithPolicy(policyID, policyName string) *Logger {
 	return &Logger{l.Logger.With(
 		zap.String("policy_id", policyID),
 		zap.String("policy_name", policyName),
@@ -103,7 +103,7 @@ func (l *Logger) WithPolicy(policyID, policyName string) Logger {
 }
 
 // WithWorkload creates a new logger with workload information
-func (l *Logger) WithWorkload(workloadID, workloadType string) Logger {
+func (l *Logger) WithWorkload(workloadID, workloadType string) *Logger {
 	return &Logger{l.Logger.With(
 		zap.String("workload_id", workloadID),
 		zap.String("workload_type", workloadType),
@@ -119,17 +119,17 @@ func (l *Logger) WithCluster(clusterID, clusterName string) *Logger {
 }
 
 // WithEvaluation creates a new logger with evaluation information
-func (l *Logger) WithEvaluation(evaluationID string) Logger {
+func (l *Logger) WithEvaluation(evaluationID string) *Logger {
 	return &Logger{l.Logger.With(zap.String("evaluation_id", evaluationID))}
 }
 
 // WithDuration creates a new logger with duration field
-func (l *Logger) WithDuration(duration time.Duration) Logger {
+func (l *Logger) WithDuration(duration time.Duration) *Logger {
 	return &Logger{l.Logger.With(zap.Duration("duration", duration))}
 }
 
 // WithError creates a new logger with error field
-func (l *Logger) WithError(err error) Logger {
+func (l *Logger) WithError(err error) *Logger {
 	return &Logger{l.Logger.With(zap.Error(err))}
 }
 

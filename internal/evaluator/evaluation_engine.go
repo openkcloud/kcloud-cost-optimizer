@@ -191,7 +191,7 @@ func (ee *evaluationEngine) GetMetrics(ctx context.Context) (map[string]interfac
 		"components": map[string]interface{}{
 			"policy_evaluator":  ee.policyEvaluator != nil,
 			"conflict_resolver": ee.conflictResolver != nil,
-			"storage_manager":   ee.storageManager != nil,
+			"storage_manager":   ee.storage != nil,
 		},
 	}
 

@@ -37,3 +37,5 @@ data:
       enabled: true
       scheduler_interval: "1m"
       max_concurrent_rules: 10
+
+

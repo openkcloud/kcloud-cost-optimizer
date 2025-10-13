@@ -199,6 +199,134 @@ func (s *memoryEvaluationStore) GetLatestByWorkload(ctx context.Context, workloa
 	return results[0], nil
 }
 
+// GetWorkloadHistory retrieves evaluation history for a workload
+func (s *memoryEvaluationStore) GetWorkloadHistory(ctx context.Context, workloadID string, filters *storage.EvaluationFilters) ([]*types.Evaluation, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var evaluations []*types.Evaluation
+	for _, result := range s.evaluations {
+		if result.WorkloadID == workloadID && s.matchesFilters(result, filters) {
+			// Convert EvaluationResult to Evaluation
+			resultCopy := *result
+			evaluation := &types.Evaluation{
+				ID:         s.generateEvaluationID(result),
+				PolicyID:   result.PolicyID,
+				WorkloadID: result.WorkloadID,
+				Status:     types.EvaluationStatusCompleted,
+				Result:     &resultCopy,
+				StartTime:  result.Timestamp,
+				EndTime:    &result.Timestamp,
+				Duration:   result.Duration,
+			}
+			evaluations = append(evaluations, evaluation)
+		}
+	}
+
+	// Sort by start time (newest first)
+	sort.Slice(evaluations, func(i, j int) bool {
+		return evaluations[i].StartTime.After(evaluations[j].StartTime)
+	})
+
+	// Apply pagination
+	if filters != nil {
+		if filters.Offset > 0 && filters.Offset < len(evaluations) {
+			evaluations = evaluations[filters.Offset:]
+		}
+		if filters.Limit > 0 && filters.Limit < len(evaluations) {
+			evaluations = evaluations[:filters.Limit]
+		}
+	}
+
+	return evaluations, nil
+}
+
+// GetPolicyHistory retrieves evaluation history for a policy
+func (s *memoryEvaluationStore) GetPolicyHistory(ctx context.Context, policyID string, filters *storage.EvaluationFilters) ([]*types.Evaluation, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var evaluations []*types.Evaluation
+	for _, result := range s.evaluations {
+		if result.PolicyID == policyID && s.matchesFilters(result, filters) {
+			// Convert EvaluationResult to Evaluation
+			resultCopy := *result
+			evaluation := &types.Evaluation{
+				ID:         s.generateEvaluationID(result),
+				PolicyID:   result.PolicyID,
+				WorkloadID: result.WorkloadID,
+				Status:     types.EvaluationStatusCompleted,
+				Result:     &resultCopy,
+				StartTime:  result.Timestamp,
+				EndTime:    &result.Timestamp,
+				Duration:   result.Duration,
+			}
+			evaluations = append(evaluations, evaluation)
+		}
+	}
+
+	// Sort by start time (newest first)
+	sort.Slice(evaluations, func(i, j int) bool {
+		return evaluations[i].StartTime.After(evaluations[j].StartTime)
+	})
+
+	// Apply pagination
+	if filters != nil {
+		if filters.Offset > 0 && filters.Offset < len(evaluations) {
+			evaluations = evaluations[filters.Offset:]
+		}
+		if filters.Limit > 0 && filters.Limit < len(evaluations) {
+			evaluations = evaluations[:filters.Limit]
+		}
+	}
+
+	return evaluations, nil
+}
+
+// GetStatistics retrieves statistics for evaluations
+func (s *memoryEvaluationStore) GetStatistics(ctx context.Context, filters *storage.EvaluationFilters) (map[string]interface{}, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	stats := make(map[string]interface{})
+
+	var totalCount, applicableCount int
+	var totalScore, totalDuration float64
+	policyTypeCounts := make(map[string]int)
+
+	for _, result := range s.evaluations {
+		if s.matchesFilters(result, filters) {
+			totalCount++
+			if result.Applicable {
+				applicableCount++
+			}
+			totalScore += result.Score
+			totalDuration += result.Duration.Seconds()
+
+			policyType := string(result.PolicyType)
+			policyTypeCounts[policyType]++
+		}
+	}
+
+	stats["total_count"] = totalCount
+	stats["applicable_count"] = applicableCount
+	stats["not_applicable_count"] = totalCount - applicableCount
+
+	if totalCount > 0 {
+		stats["average_score"] = totalScore / float64(totalCount)
+		stats["average_duration_seconds"] = totalDuration / float64(totalCount)
+		stats["applicable_percentage"] = float64(applicableCount) / float64(totalCount) * 100
+	} else {
+		stats["average_score"] = 0.0
+		stats["average_duration_seconds"] = 0.0
+		stats["applicable_percentage"] = 0.0
+	}
+
+	stats["policy_type_counts"] = policyTypeCounts
+
+	return stats, nil
+}
+
 // CreateMany creates multiple evaluation results
 func (s *memoryEvaluationStore) CreateMany(ctx context.Context, results []*types.EvaluationResult) error {
 	s.mu.Lock()
