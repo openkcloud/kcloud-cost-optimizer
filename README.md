@@ -275,7 +275,6 @@ curl -X POST http://localhost:8005/policies \
 kubectl get policies
 kubectl describe policy default-cost-policy
 ```
-
 ## 🚀 배포
 
 ```bash
