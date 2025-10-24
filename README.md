@@ -276,6 +276,71 @@ kubectl get policies
 kubectl describe policy default-cost-policy
 ```
 
+## 🔒 보안 설정 (중요!)
+
+**⚠️ 이 저장소는 프로덕션 비밀번호를 포함하지 않습니다.**
+
+### 배포 전 필수 작업
+
+1. **환경 변수 설정**
+   ```bash
+   # .env.example을 .env로 복사
+   cp .env.example .env
+
+   # .env 파일을 편집하여 강력한 비밀번호로 변경
+   vi .env
+   ```
+
+2. **강력한 비밀번호 생성**
+   ```bash
+   # 랜덤 비밀번호 생성 (32자)
+   openssl rand -base64 32
+
+   # 또는
+   pwgen -s 32 1
+   ```
+
+3. **필수 환경 변수**
+   - `POSTGRES_PASSWORD`: PostgreSQL 데이터베이스 비밀번호
+   - `REDIS_PASSWORD`: Redis 캐시 비밀번호
+   - `GRAFANA_ADMIN_PASSWORD`: Grafana 관리자 비밀번호
+   - `API_TOKEN`: API 인증 토큰
+   - `WEBHOOK_TOKEN`: Webhook 인증 토큰
+
+4. **Kubernetes 비밀 설정**
+   ```bash
+   # secret.yaml.example을 secret.yaml로 복사
+   cp k8s/secret.yaml.example k8s/secret.yaml
+
+   # 실제 값으로 수정 후 적용
+   kubectl apply -f k8s/secret.yaml
+
+   # 보안 강화: Sealed Secrets 사용 권장
+   # https://github.com/bitnami-labs/sealed-secrets
+   ```
+
+### 보안 권장 사항
+
+- ✅ **절대 .env 파일을 커밋하지 마세요** (.gitignore에 포함됨)
+- ✅ **k8s/secret.yaml을 커밋하지 마세요** (.gitignore에 포함됨)
+- ✅ 최소 16자 이상의 복잡한 비밀번호 사용
+- ✅ 프로덕션 환경에서는 비밀 관리 도구 사용:
+  - Kubernetes: Sealed Secrets, External Secrets Operator
+  - Cloud: AWS Secrets Manager, Azure Key Vault, GCP Secret Manager
+  - Self-hosted: HashiCorp Vault
+- ✅ 정기적인 비밀번호 로테이션
+- ✅ 네트워크 방화벽 설정 (필요한 포트만 개방)
+
+### 프로덕션 배포 체크리스트
+
+- [ ] 모든 기본 비밀번호를 강력한 비밀번호로 변경
+- [ ] .env 파일 생성 및 설정
+- [ ] Kubernetes Secrets 설정
+- [ ] HTTPS/TLS 인증서 설정
+- [ ] 방화벽 및 네트워크 정책 구성
+- [ ] 모니터링 및 로깅 설정
+- [ ] 백업 전략 수립
+
 ## 🚀 배포
 
 ```bash

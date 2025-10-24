@@ -18,11 +18,11 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=policy_user
-      - POSTGRES_PASSWORD=policy_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - POSTGRES_DB=policy_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=redis_password
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
     environment:
       - POSTGRES_DB=policy_db
       - POSTGRES_USER=policy_user
-      - POSTGRES_PASSWORD=policy_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -84,7 +84,7 @@ services:
     container_name: policy-redis
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes --requirepass redis_password
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
     volumes:
       - redis-data:/data
     networks:
@@ -146,7 +146,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
     volumes:
