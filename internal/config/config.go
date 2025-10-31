@@ -137,14 +137,25 @@ func LoadConfig(configPath ...string) (*Config, error) {
 
 // setDefaults sets default configuration values
 func setDefaults() {
-	// Server defaults
+	setServerDefaults()
+	setDatabaseDefaults()
+	setRedisDefaults()
+	setLoggingDefaults()
+	setPolicyDefaults()
+	setAutomationDefaults()
+	setMonitoringDefaults()
+	setKubernetesDefaults()
+}
+
+func setServerDefaults() {
 	viper.SetDefault("server.port", 8005)
 	viper.SetDefault("server.host", "0.0.0.0")
 	viper.SetDefault("server.read_timeout", "30s")
 	viper.SetDefault("server.write_timeout", "30s")
 	viper.SetDefault("server.idle_timeout", "120s")
+}
 
-	// Database defaults
+func setDatabaseDefaults() {
 	viper.SetDefault("database.type", "postgres")
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 5432)
@@ -152,8 +163,9 @@ func setDefaults() {
 	viper.SetDefault("database.ssl_mode", "disable")
 	viper.SetDefault("database.max_connections", 100)
 	viper.SetDefault("database.connection_timeout", "30s")
+}
 
-	// Redis defaults
+func setRedisDefaults() {
 	viper.SetDefault("redis.host", "localhost")
 	viper.SetDefault("redis.port", 6379)
 	viper.SetDefault("redis.database", 0)
@@ -162,32 +174,37 @@ func setDefaults() {
 	viper.SetDefault("redis.dial_timeout", "5s")
 	viper.SetDefault("redis.read_timeout", "3s")
 	viper.SetDefault("redis.write_timeout", "3s")
+}
 
-	// Logging defaults
+func setLoggingDefaults() {
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.format", "json")
 	viper.SetDefault("logging.output", "stdout")
+}
 
-	// Policy defaults
+func setPolicyDefaults() {
 	viper.SetDefault("policy.cache_ttl", "300s")
 	viper.SetDefault("policy.max_policies", 1000)
 	viper.SetDefault("policy.evaluation_timeout", "10s")
 	viper.SetDefault("policy.conflict_resolution", "priority")
+}
 
-	// Automation defaults
+func setAutomationDefaults() {
 	viper.SetDefault("automation.enabled", true)
 	viper.SetDefault("automation.check_interval", "30s")
 	viper.SetDefault("automation.max_concurrent_rules", 10)
 	viper.SetDefault("automation.rule_timeout", "60s")
+}
 
-	// Monitoring defaults
+func setMonitoringDefaults() {
 	viper.SetDefault("monitoring.enabled", true)
 	viper.SetDefault("monitoring.metrics_path", "/metrics")
 	viper.SetDefault("monitoring.health_path", "/health")
 	viper.SetDefault("monitoring.readiness_path", "/ready")
 	viper.SetDefault("monitoring.liveness_path", "/live")
+}
 
-	// Kubernetes defaults
+func setKubernetesDefaults() {
 	viper.SetDefault("kubernetes.enabled", true)
 	viper.SetDefault("kubernetes.namespace", "kcloud-system")
 	viper.SetDefault("kubernetes.in_cluster", true)
