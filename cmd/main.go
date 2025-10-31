@@ -97,22 +97,25 @@ func main() {
 	// Create types.Logger interface wrapper
 	var appLogger types.Logger = &LoggerWrapper{loggerInstance}
 
-	// Initialize metrics
-	metricsInstance := metrics.NewMetrics(appLogger)
-	metricsInstance.Initialize()
-
-	// Initialize storage
+	// Initialize storage (required - core functionality)
 	storageManager := memory.NewStorageManager()
 	loggerInstance.Info("Storage manager initialized")
 
-	// Initialize validator
+	// Initialize metrics (optional - monitoring feature, but initialization always succeeds)
+	metricsInstance := metrics.NewMetrics(appLogger)
+	metricsInstance.Initialize()
+	loggerInstance.Info("Metrics initialized")
+
+	// Initialize validator (partially optional - some features may be limited)
 	validationEngine := validator.NewValidationEngine(appLogger)
 	if err := validationEngine.Initialize(context.Background()); err != nil {
-		loggerInstance.Fatal("Failed to initialize validation engine")
+		loggerInstance.WithError(err).Warn("Failed to initialize validation engine - continuing with limited validation")
+		validationEngine = nil // Disable validation if initialization fails
+	} else {
+		loggerInstance.Info("Validation engine initialized")
 	}
-	loggerInstance.Info("Validation engine initialized")
 
-	// Initialize evaluator components
+	// Initialize evaluator components (required - core functionality)
 	ruleEngine := evaluator.NewRuleEngine(appLogger)
 	policyEvaluator := evaluator.NewPolicyEvaluator(storageManager, ruleEngine, appLogger)
 	conflictResolver := evaluator.NewConflictResolver(appLogger)
@@ -120,12 +123,20 @@ func main() {
 	evaluationEngine := evaluator.NewEvaluationEngine(policyEvaluator, conflictResolver, storageManager, appLogger)
 	loggerInstance.Info("Evaluation engine initialized")
 
-	// Initialize automation engine
-	automationEngine := automation.NewAutomationEngine(storageManager, nil, nil, nil, appLogger)
-	if err := automationEngine.Initialize(context.Background()); err != nil {
-		loggerInstance.Fatal("Failed to initialize automation engine")
+	// Initialize automation engine (optional - automation feature)
+	var automationEngine automation.AutomationEngine
+	if ae := automation.NewAutomationEngine(storageManager, nil, nil, nil, appLogger); ae != nil {
+		if err := ae.Initialize(context.Background()); err != nil {
+			loggerInstance.WithError(err).Warn("Failed to initialize automation engine - continuing without automation")
+			automationEngine = nil // Disable automation if initialization fails
+		} else {
+			automationEngine = ae
+			loggerInstance.Info("Automation engine initialized")
+		}
+	} else {
+		loggerInstance.Warn("Automation engine not available - continuing without automation")
+		automationEngine = nil
 	}
-	loggerInstance.Info("Automation engine initialized")
 
 	// Initialize handlers
 	handlersInstance := handlers.NewHandlers(storageManager, evaluationEngine, automationEngine, appLogger)
