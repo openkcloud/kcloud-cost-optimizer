@@ -300,164 +300,116 @@ func (pe *policyEnforcer) generateActions(ctx context.Context, decision *types.D
 	return actions, nil
 }
 
-// generateScheduleActions generates actions for scheduling decisions
-func (pe *policyEnforcer) generateScheduleActions(decision *types.Decision, workload *types.Workload) []*Action {
-	actions := []*Action{
-		{
-			Type:   ActionTypeSchedule,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id":         workload.ID,
-				"cluster_id":          decision.ClusterID,
-				"node_id":             decision.NodeID,
-				"recommended_cluster": decision.RecommendedCluster,
-				"recommended_node":    decision.RecommendedNode,
-				"resources":           workload.Requirements,
-			},
-			Timeout: 5 * time.Minute,
-		},
+// createAction creates a new action with common parameters
+func (pe *policyEnforcer) createAction(actionType string, target string, parameters map[string]interface{}, timeout time.Duration) *Action {
+	params := make(map[string]interface{})
+	for k, v := range parameters {
+		params[k] = v
 	}
+	return &Action{
+		Type:       actionType,
+		Target:     target,
+		Parameters: params,
+		Timeout:    timeout,
+	}
+}
 
-	// Add notification action
+// createNotificationAction creates a notification action
+func (pe *policyEnforcer) createNotificationAction(target, message, workloadID, decisionID string) *Action {
+	return &Action{
+		Type:   ActionTypeNotify,
+		Target: target,
+		Parameters: map[string]interface{}{
+			"message":     message,
+			"workload_id": workloadID,
+			"decision_id": decisionID,
+		},
+		Timeout: 30 * time.Second,
+	}
+}
+
+func (pe *policyEnforcer) generateScheduleActions(decision *types.Decision, workload *types.Workload) []*Action {
+	parameters := map[string]interface{}{
+		"workload_id":         workload.ID,
+		"cluster_id":          decision.ClusterID,
+		"node_id":             decision.NodeID,
+		"recommended_cluster": decision.RecommendedCluster,
+		"recommended_node":    decision.RecommendedNode,
+		"resources":           workload.Requirements,
+	}
+	actions := []*Action{pe.createAction(ActionTypeSchedule, decision.WorkloadID, parameters, 5*time.Minute)}
+
 	if decision.Message != "" {
-		actions = append(actions, &Action{
-			Type:   ActionTypeNotify,
-			Target: "scheduler",
-			Parameters: map[string]interface{}{
-				"message":     decision.Message,
-				"workload_id": workload.ID,
-				"decision_id": decision.ID,
-			},
-			Timeout: 30 * time.Second,
-		})
+		actions = append(actions, pe.createNotificationAction("scheduler", decision.Message, workload.ID, decision.ID))
 	}
 
 	return actions
 }
 
-// generateRescheduleActions generates actions for rescheduling decisions
 func (pe *policyEnforcer) generateRescheduleActions(decision *types.Decision, workload *types.Workload) []*Action {
-	return []*Action{
-		{
-			Type:   ActionTypeReschedule,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id":         workload.ID,
-				"current_cluster":     decision.ClusterID,
-				"recommended_cluster": decision.RecommendedCluster,
-				"reason":              decision.Reason,
-			},
-			Timeout: 10 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id":         workload.ID,
+		"current_cluster":     decision.ClusterID,
+		"recommended_cluster": decision.RecommendedCluster,
+		"reason":              decision.Reason,
 	}
+	return []*Action{pe.createAction(ActionTypeReschedule, decision.WorkloadID, parameters, 10*time.Minute)}
 }
 
-// generateMigrateActions generates actions for migration decisions
 func (pe *policyEnforcer) generateMigrateActions(decision *types.Decision, workload *types.Workload) []*Action {
-	return []*Action{
-		{
-			Type:   ActionTypeMigrate,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id":        workload.ID,
-				"source_cluster":     decision.ClusterID,
-				"target_cluster":     decision.RecommendedCluster,
-				"source_node":        decision.NodeID,
-				"target_node":        decision.RecommendedNode,
-				"migration_strategy": "live",
-			},
-			Timeout: 15 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id":        workload.ID,
+		"source_cluster":     decision.ClusterID,
+		"target_cluster":     decision.RecommendedCluster,
+		"source_node":        decision.NodeID,
+		"target_node":        decision.RecommendedNode,
+		"migration_strategy": "live",
 	}
+	return []*Action{pe.createAction(ActionTypeMigrate, decision.WorkloadID, parameters, 15*time.Minute)}
 }
 
-// generateScaleActions generates actions for scaling decisions
 func (pe *policyEnforcer) generateScaleActions(decision *types.Decision, workload *types.Workload) []*Action {
-	return []*Action{
-		{
-			Type:   ActionTypeScale,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id":     workload.ID,
-				"scale_factor":    decision.Details["scale_factor"],
-				"scale_direction": decision.Details["scale_direction"],
-			},
-			Timeout: 5 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id":     workload.ID,
+		"scale_factor":    decision.Details["scale_factor"],
+		"scale_direction": decision.Details["scale_direction"],
 	}
+	return []*Action{pe.createAction(ActionTypeScale, decision.WorkloadID, parameters, 5*time.Minute)}
 }
 
-// generateTerminateActions generates actions for termination decisions
 func (pe *policyEnforcer) generateTerminateActions(decision *types.Decision, workload *types.Workload) []*Action {
-	return []*Action{
-		{
-			Type:   ActionTypeTerminate,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id":  workload.ID,
-				"reason":       decision.Reason,
-				"grace_period": "30s",
-			},
-			Timeout: 2 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id":  workload.ID,
+		"reason":       decision.Reason,
+		"grace_period": "30s",
 	}
+	return []*Action{pe.createAction(ActionTypeTerminate, decision.WorkloadID, parameters, 2*time.Minute)}
 }
 
-// generateSuspendActions generates actions for suspension decisions
 func (pe *policyEnforcer) generateSuspendActions(decision *types.Decision, workload *types.Workload) []*Action {
-	return []*Action{
-		{
-			Type:   ActionTypeSuspend,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id": workload.ID,
-				"reason":      decision.Reason,
-			},
-			Timeout: 2 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id": workload.ID,
+		"reason":      decision.Reason,
 	}
+	return []*Action{pe.createAction(ActionTypeSuspend, decision.WorkloadID, parameters, 2*time.Minute)}
 }
 
-// generateResumeActions generates actions for resume decisions
 func (pe *policyEnforcer) generateResumeActions(decision *types.Decision, workload *types.Workload) []*Action {
-	return []*Action{
-		{
-			Type:   ActionTypeResume,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id": workload.ID,
-				"reason":      decision.Reason,
-			},
-			Timeout: 2 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id": workload.ID,
+		"reason":      decision.Reason,
 	}
+	return []*Action{pe.createAction(ActionTypeResume, decision.WorkloadID, parameters, 2*time.Minute)}
 }
 
-// generateOptimizeActions generates actions for optimization decisions
 func (pe *policyEnforcer) generateOptimizeActions(decision *types.Decision, workload *types.Workload) []*Action {
-	actions := []*Action{
-		{
-			Type:   ActionTypeUpdate,
-			Target: decision.WorkloadID,
-			Parameters: map[string]interface{}{
-				"workload_id":   workload.ID,
-				"optimizations": decision.Details["optimizations"],
-			},
-			Timeout: 5 * time.Minute,
-		},
+	parameters := map[string]interface{}{
+		"workload_id":   workload.ID,
+		"optimizations": decision.Details["optimizations"],
 	}
+	actions := []*Action{pe.createAction(ActionTypeUpdate, decision.WorkloadID, parameters, 5*time.Minute)}
 
-	// Add notification action
-	actions = append(actions, &Action{
-		Type:   ActionTypeNotify,
-		Target: "optimizer",
-		Parameters: map[string]interface{}{
-			"message":     "Workload optimization completed",
-			"workload_id": workload.ID,
-			"decision_id": decision.ID,
-		},
-		Timeout: 30 * time.Second,
-	})
+	actions = append(actions, pe.createNotificationAction("optimizer", "Workload optimization completed", workload.ID, decision.ID))
 
 	return actions
 }
