@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/kcloud-opt/policy/api/handlers"
 	"github.com/kcloud-opt/policy/api/routes"
 	"github.com/kcloud-opt/policy/internal/automation"
@@ -34,44 +36,85 @@ type LoggerWrapper struct {
 	*logger.Logger
 }
 
+// convertFields converts interface{} fields to zap.Field format
+// Supports key-value pairs: ("key1", value1, "key2", value2, ...)
+// Or zap.Field directly
+func convertFields(fields ...interface{}) []zap.Field {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	zapFields := make([]zap.Field, 0, len(fields))
+	
+	// Process fields as key-value pairs
+	for i := 0; i < len(fields); i++ {
+		// Check if it's already a zap.Field
+		if field, ok := fields[i].(zap.Field); ok {
+			zapFields = append(zapFields, field)
+			continue
+		}
+		
+		// Try to process as key-value pair
+		if i < len(fields)-1 {
+			key, ok := fields[i].(string)
+			if ok {
+				value := fields[i+1]
+				zapFields = append(zapFields, zap.Any(key, value))
+				i++ // Skip next field as we've already processed it
+				continue
+			}
+		}
+		
+		// If not a key-value pair or zap.Field, add as Any
+		zapFields = append(zapFields, zap.Any(fmt.Sprintf("field_%d", i), fields[i]))
+	}
+	
+	return zapFields
+}
+
 func (l *LoggerWrapper) Info(msg string, fields ...interface{}) {
-	l.Logger.Info(msg)
+	zapFields := convertFields(fields...)
+	l.Logger.Info(msg, zapFields...)
 }
 
 func (l *LoggerWrapper) Warn(msg string, fields ...interface{}) {
-	l.Logger.Warn(msg)
+	zapFields := convertFields(fields...)
+	l.Logger.Warn(msg, zapFields...)
 }
 
 func (l *LoggerWrapper) Error(msg string, fields ...interface{}) {
-	l.Logger.Error(msg)
+	zapFields := convertFields(fields...)
+	l.Logger.Error(msg, zapFields...)
 }
 
 func (l *LoggerWrapper) Debug(msg string, fields ...interface{}) {
-	l.Logger.Debug(msg)
+	zapFields := convertFields(fields...)
+	l.Logger.Debug(msg, zapFields...)
 }
 
 func (l *LoggerWrapper) Fatal(msg string, fields ...interface{}) {
-	l.Logger.Fatal(msg)
+	zapFields := convertFields(fields...)
+	l.Logger.Fatal(msg, zapFields...)
 }
 
 func (l *LoggerWrapper) WithError(err error) types.Logger {
-	return l
+	return &LoggerWrapper{l.Logger.WithError(err)}
 }
 
 func (l *LoggerWrapper) WithDuration(duration time.Duration) types.Logger {
-	return l
+	return &LoggerWrapper{l.Logger.WithDuration(duration)}
 }
 
 func (l *LoggerWrapper) WithPolicy(policyID, policyName string) types.Logger {
-	return l
+	return &LoggerWrapper{l.Logger.WithPolicy(policyID, policyName)}
 }
 
 func (l *LoggerWrapper) WithWorkload(workloadID, workloadType string) types.Logger {
-	return l
+	return &LoggerWrapper{l.Logger.WithWorkload(workloadID, workloadType)}
 }
 
 func (l *LoggerWrapper) WithEvaluation(evaluationID string) types.Logger {
-	return l
+	return &LoggerWrapper{l.Logger.WithEvaluation(evaluationID)}
 }
 
 func main() {
