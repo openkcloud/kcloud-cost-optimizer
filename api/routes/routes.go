@@ -27,31 +27,22 @@ func NewRouter(handlers *handlers.Handlers, config *config.Config, logger *logge
 	}
 }
 
-// SetupRoutes configures all API routes
 func (r *Router) SetupRoutes() *gin.Engine {
-	// Set Gin mode
 	if r.config.Server.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Create Gin engine
 	router := gin.New()
-
-	// Add middleware
 	r.setupMiddleware(router)
-
-	// Setup routes
 	r.setupHealthRoutes(router)
 	r.setupAPIRoutes(router)
 
 	return router
 }
 
-// setupMiddleware configures middleware for the router
 func (r *Router) setupMiddleware(router *gin.Engine) {
-	// Logger middleware
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
 			param.ClientIP,
@@ -66,10 +57,8 @@ func (r *Router) setupMiddleware(router *gin.Engine) {
 		)
 	}))
 
-	// Recovery middleware
 	router.Use(gin.Recovery())
 
-	// CORS middleware
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -79,7 +68,6 @@ func (r *Router) setupMiddleware(router *gin.Engine) {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Request ID middleware
 	router.Use(func(c *gin.Context) {
 		requestID := c.GetHeader("X-Request-ID")
 		if requestID == "" {
@@ -90,17 +78,13 @@ func (r *Router) setupMiddleware(router *gin.Engine) {
 		c.Next()
 	})
 
-	// Rate limiting middleware (simple implementation)
 	router.Use(func(c *gin.Context) {
-		// Simple rate limiting - in production, use a proper rate limiter
 		time.Sleep(10 * time.Millisecond)
 		c.Next()
 	})
 }
 
-// setupHealthRoutes configures health check routes
 func (r *Router) setupHealthRoutes(router *gin.Engine) {
-	// Health check routes
 	router.GET("/health", r.handlers.Health.Health)
 	router.GET("/ready", r.handlers.Health.Readiness)
 	router.GET("/live", r.handlers.Health.Liveness)
@@ -109,12 +93,9 @@ func (r *Router) setupHealthRoutes(router *gin.Engine) {
 	router.GET("/info", r.handlers.Health.Info)
 }
 
-// setupAPIRoutes configures API routes
 func (r *Router) setupAPIRoutes(router *gin.Engine) {
-	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
-		// Policy routes
 		policies := v1.Group("/policies")
 		{
 			policies.GET("", r.handlers.Policy.ListPolicies)
@@ -128,7 +109,6 @@ func (r *Router) setupAPIRoutes(router *gin.Engine) {
 			policies.GET("/:id/versions", r.handlers.Policy.GetPolicyVersions)
 		}
 
-		// Workload routes
 		workloads := v1.Group("/workloads")
 		{
 			workloads.GET("", r.handlers.Workload.ListWorkloads)
@@ -141,7 +121,6 @@ func (r *Router) setupAPIRoutes(router *gin.Engine) {
 			workloads.GET("/:id/history", r.handlers.Workload.GetWorkloadHistory)
 		}
 
-		// Evaluation routes
 		evaluations := v1.Group("/evaluations")
 		{
 			evaluations.GET("", r.handlers.Evaluation.ListEvaluations)
@@ -153,10 +132,8 @@ func (r *Router) setupAPIRoutes(router *gin.Engine) {
 			evaluations.GET("/:id", r.handlers.Evaluation.GetEvaluation)
 		}
 
-		// Automation routes
 		automation := v1.Group("/automation")
 		{
-			// Rule management
 			rules := automation.Group("/rules")
 			{
 				rules.GET("", r.handlers.Automation.ListAutomationRules)
@@ -170,7 +147,6 @@ func (r *Router) setupAPIRoutes(router *gin.Engine) {
 				rules.GET("/:id/history", r.handlers.Automation.GetAutomationRuleHistory)
 			}
 
-			// Automation statistics and health
 			automation.GET("/statistics", r.handlers.Automation.GetAutomationStatistics)
 			automation.GET("/health", r.handlers.Automation.GetAutomationHealth)
 		}

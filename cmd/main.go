@@ -45,30 +45,26 @@ func convertFields(fields ...interface{}) []zap.Field {
 	}
 
 	zapFields := make([]zap.Field, 0, len(fields))
-	
-	// Process fields as key-value pairs
+
 	for i := 0; i < len(fields); i++ {
-		// Check if it's already a zap.Field
 		if field, ok := fields[i].(zap.Field); ok {
 			zapFields = append(zapFields, field)
 			continue
 		}
-		
-		// Try to process as key-value pair
+
 		if i < len(fields)-1 {
 			key, ok := fields[i].(string)
 			if ok {
 				value := fields[i+1]
 				zapFields = append(zapFields, zap.Any(key, value))
-				i++ // Skip next field as we've already processed it
+				i++
 				continue
 			}
 		}
-		
-		// If not a key-value pair or zap.Field, add as Any
+
 		zapFields = append(zapFields, zap.Any(fmt.Sprintf("field_%d", i), fields[i]))
 	}
-	
+
 	return zapFields
 }
 
@@ -118,7 +114,6 @@ func (l *LoggerWrapper) WithEvaluation(evaluationID string) types.Logger {
 }
 
 func main() {
-	// Initialize logger
 	loggerInstance, err := logger.NewLogger(&config.LoggingConfig{
 		Level:  "info",
 		Format: "json",
@@ -129,7 +124,6 @@ func main() {
 
 	loggerInstance.Info("Starting Policy Engine")
 
-	// Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		loggerInstance.Fatal("Failed to load configuration")
@@ -137,28 +131,23 @@ func main() {
 
 	loggerInstance.Info("Configuration loaded")
 
-	// Create types.Logger interface wrapper
 	var appLogger types.Logger = &LoggerWrapper{loggerInstance}
 
-	// Initialize storage (required - core functionality)
 	storageManager := memory.NewStorageManager()
 	loggerInstance.Info("Storage manager initialized")
 
-	// Initialize metrics (optional - monitoring feature, but initialization always succeeds)
 	metricsInstance := metrics.NewMetrics(appLogger)
 	metricsInstance.Initialize()
 	loggerInstance.Info("Metrics initialized")
 
-	// Initialize validator (partially optional - some features may be limited)
 	validationEngine := validator.NewValidationEngine(appLogger)
 	if err := validationEngine.Initialize(context.Background()); err != nil {
 		loggerInstance.WithError(err).Warn("Failed to initialize validation engine - continuing with limited validation")
-		validationEngine = nil // Disable validation if initialization fails
+		validationEngine = nil
 	} else {
 		loggerInstance.Info("Validation engine initialized")
 	}
 
-	// Initialize evaluator components (required - core functionality)
 	ruleEngine := evaluator.NewRuleEngine(appLogger)
 	policyEvaluator := evaluator.NewPolicyEvaluator(storageManager, ruleEngine, appLogger)
 	conflictResolver := evaluator.NewConflictResolver(appLogger)
@@ -166,12 +155,11 @@ func main() {
 	evaluationEngine := evaluator.NewEvaluationEngine(policyEvaluator, conflictResolver, storageManager, appLogger)
 	loggerInstance.Info("Evaluation engine initialized")
 
-	// Initialize automation engine (optional - automation feature)
 	var automationEngine automation.AutomationEngine
 	if ae := automation.NewAutomationEngine(storageManager, nil, nil, nil, appLogger); ae != nil {
 		if err := ae.Initialize(context.Background()); err != nil {
 			loggerInstance.WithError(err).Warn("Failed to initialize automation engine - continuing without automation")
-			automationEngine = nil // Disable automation if initialization fails
+			automationEngine = nil
 		} else {
 			automationEngine = ae
 			loggerInstance.Info("Automation engine initialized")
@@ -181,21 +169,17 @@ func main() {
 		automationEngine = nil
 	}
 
-	// Initialize handlers
 	handlersInstance := handlers.NewHandlers(storageManager, evaluationEngine, automationEngine, appLogger)
 	loggerInstance.Info("Handlers initialized")
 
-	// Initialize router
 	router := routes.NewRouter(handlersInstance, cfg, loggerInstance)
 	httpRouter := router.SetupRoutes()
 	loggerInstance.Info("Router initialized")
 
-	// Start metrics collection
 	metricsManager := metrics.NewMetricsManager(metricsInstance, appLogger)
 	go metricsManager.Start(context.Background())
 	loggerInstance.Info("Metrics collection started")
 
-	// Create HTTP server
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler:      httpRouter,
@@ -204,7 +188,6 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// Start server in a goroutine
 	go func() {
 		loggerInstance.Info("Starting HTTP server")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -212,18 +195,15 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	loggerInstance.Info("Shutting down server...")
 
-	// Create a deadline for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Shutdown server
 	if err := server.Shutdown(ctx); err != nil {
 		loggerInstance.Error("Server forced to shutdown")
 	}
