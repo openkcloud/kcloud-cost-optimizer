@@ -18,6 +18,7 @@ k8s/secret.yaml
 *.dylib
 bin/
 dist/
+/main
 
 # Test binary, built with `go test -c`
 *.test
